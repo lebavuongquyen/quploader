@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUploader - Basic Demo</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; }
+    
+    /* Navigation Bar */
+    .navbar {
+      display: flex;
+      background: #1e1e1e;
+      padding: 10px 20px;
+      gap: 15px;
+      align-items: center;
+      border-bottom: 3px solid #007bff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+    .navbar a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .navbar a:hover {
+      background: #333;
+      color: #fff;
+    }
+    .navbar a.active {
+      background: #007bff;
+      color: #fff;
+    }
+    .navbar .logo {
+      color: #007bff;
+      font-size: 18px;
+      font-weight: 800;
+      margin-right: auto;
+      font-family: sans-serif;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    #sidebar { width: 420px; min-width: 420px; padding: 20px; background: #f9f9f9; border-right: 1px solid #ddd; overflow-y: auto; display: flex; flex-direction: column; }
+    h3 { margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 8px; color: #333; }
+    .section { margin-bottom: 24px; }
+    .control-group { margin-bottom: 12px; }
+    .control-group label { display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold; color: #444; }
+    .control-group input[type="text"], .control-group input[type="number"], .control-group select, .control-group textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-size: 13px; }
+    .checkbox-group { display: flex; align-items: center; margin-bottom: 8px; }
+    .checkbox-group input[type="checkbox"], .checkbox-group input[type="radio"] { margin: 0 8px 0 0; cursor: pointer; }
+    .checkbox-group label { display: inline-block; margin-bottom: 0; font-weight: normal; font-size: 14px; cursor: pointer; }
+    #main { flex: 1; padding: 20px; overflow-y: auto; background: #fff; }
+    button#apply { width: 100%; padding: 14px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; position: sticky; bottom: 0; z-index: 10; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+    button#apply:hover { background: #0056b3; }
+    .help-text { font-size: 11px; color: #666; margin-top: -2px; margin-bottom: 8px; display: block; font-style: italic; }
+
+    @media (max-width: 768px) {
+      body { height: auto; overflow: auto; }
+      .app-container { flex-direction: column; overflow: visible; height: auto; }
+      #sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid #ddd; height: auto; overflow: visible; box-sizing: border-box; }
+      #main { flex: none; width: 100%; box-sizing: border-box; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <div class="navbar">
+    <div class="logo">🚀 QUploader</div>
+    <a href="index.html" class="active">Basic Uploader</a>
+    <a href="callbacks.html">Callbacks & Console</a>
+    <a href="headless.html">Headless Uploader</a>
+    <a href="docs.html">Documentation</a>
+  </div>
+
+  <div class="app-container">
+    <div id="sidebar">
+      <!-- QR Code Section for Mobile Testing -->
+      <div class="section" id="qr-section" style="text-align: center; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 12px; font-size: 15px; border-bottom: 2px solid #28a745; padding-bottom: 8px;">Scan to Test on Mobile</h3>
+        <div id="qrcode-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px; min-height: 150px;">
+          <span style="font-size: 12px; color: #999;">Generating QR Code...</span>
+        </div>
+        <div style="font-size: 11px; word-break: break-all; color: #555; text-align: left; padding: 4px 0;">
+          <strong style="display: block; margin-bottom: 2px;">Target URL:</strong>
+          <a id="qr-link" href="#" target="_blank" style="color: #007bff; text-decoration: underline; font-family: monospace;">-</a>
+        </div>
+      </div>
+
+      <form id="configForm">
+        <div class="section">
+          <h3>General Settings</h3>
+          <div class="control-group">
+            <label>Selection Mode</label>
+            <div class="checkbox-group">
+              <input type="radio" name="selectionMode" id="modeSingle" value="single" checked> <label for="modeSingle">Single File (multiple = false)</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="radio" name="selectionMode" id="modeMultiple" value="multiple"> <label for="modeMultiple">Multiple Files (multiple = true)</label>
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <label>Features (Booleans)</label>
+            <div class="checkbox-group"><input type="checkbox" id="dragDrop" checked> <label for="dragDrop">Drag & Drop</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="browseButton" checked> <label for="browseButton">Browse Button</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="cameraButton" checked> <label for="cameraButton">Camera Button</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="showIntroText" checked> <label for="showIntroText">Show Intro Text</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="allowFolder"> <label for="allowFolder">Allow Folder</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="autoUpload" checked> <label for="autoUpload">Auto Upload</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="progressBar" checked> <label for="progressBar">Progress Bar</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="allowDelete" checked> <label for="allowDelete">Allow Delete</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="uploadAsBase64"> <label for="uploadAsBase64">Upload As Base64</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="clickReviewAreaToBrowse"> <label for="clickReviewAreaToBrowse">Click Review To Browse</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="useIcon"> <label for="useIcon">Use Icon Buttons (useIcon)</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="darkMode"> <label for="darkMode">Dark Mode (darkMode)</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="resumable" checked> <label for="resumable">Resumable Chunk Upload (resumable)</label></div>
+            <div class="checkbox-group"><input type="checkbox" id="preferFileInput" checked> <label for="preferFileInput">Prefer File Input (preferFileInput)</label></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>UI & Limits</h3>
+          <div class="control-group">
+            <label for="reviewMode">Review Mode</label>
+            <select id="reviewMode">
+              <option value="thumbnail" selected>Thumbnail</option>
+              <option value="detail">Detail</option>
+              <option value="single">Single</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="singleModeFit">Single Mode Fit</label>
+            <select id="singleModeFit">
+              <option value="cover" selected>Cover (Fill)</option>
+              <option value="contain">Contain (Fit inside)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="reviewPosition">Review Position</label>
+            <select id="reviewPosition">
+              <option value="below" selected>Below</option>
+              <option value="above">Above</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="maxFileSize">Max File Size (bytes or 50MB)</label>
+            <input type="text" id="maxFileSize" value="10MB">
+          </div>
+          <div class="control-group">
+            <label for="chunkSize">Chunk Size (bytes or 1MB)</label>
+            <input type="text" id="chunkSize" value="1MB">
+          </div>
+          <div class="control-group">
+            <label for="subfolderLevel">Subfolder Level (Empty = 0, Negative = unlimited)</label>
+            <input type="number" id="subfolderLevel" value="0">
+          </div>
+          <div class="control-group">
+            <label for="errorDelay">Error Delay (ms)</label>
+            <input type="number" id="errorDelay" value="3000">
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Validation & Processing</h3>
+          <div class="control-group">
+            <label for="fileTypes">File Types (e.g. .png, .jpg, image/*)</label>
+            <input type="text" id="fileTypes" value="image/*" placeholder="Leave empty for all types">
+          </div>
+          <div class="checkbox-group"><input type="checkbox" id="enableResize"> <label for="enableResize">Enable Image Resize</label></div>
+          <div class="control-group">
+            <label for="resizeMaxWidth">Resize Max Width</label>
+            <input type="number" id="resizeMaxWidth" value="800">
+          </div>
+          <div class="control-group">
+            <label for="resizeMaxHeight">Resize Max Height</label>
+            <input type="number" id="resizeMaxHeight" value="800">
+          </div>
+        </div>
+
+        <button type="button" id="apply">Apply Config & Re-init</button>
+      </form>
+    </div>
+
+    <div id="main">
+      <h2>QUploader Basic Demo</h2>
+      <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" id="btnUploadAll" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">API: Upload All</button>
+        <button type="button" id="btnClearQueue" style="padding: 8px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">API: Clear Queue</button>
+        <button type="button" id="btnGetFiles" style="padding: 8px 12px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">API: Get Files (Console)</button>
+      </div>
+      <div id="uploadContainer">
+        <div id="upload"></div>
+      </div>
+      <span style="font-size: 13px; color: #666; display: block; margin-top: 10px;">💡 <b>Tip:</b> Click on the uploader container, then press <b>Ctrl+V</b> to paste an image/file directly!</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import $ from 'jquery';
+    import '/src/quploader.ts';
+
+    function initUploader() {
+      // Clean up DOM for a fresh init
+      $('#uploadContainer').empty().append('<div id="upload"></div>');
+      
+      const mode = $('input[name="selectionMode"]:checked').val();
+
+      const config = {
+        uploadUrl: '/api/upload',
+        chunkUploadUrl: '/api/chunk-upload',
+        cancelUrl: '/api/cancel',
+        deleteUrl: '/api/delete',
+        multiple: mode === 'multiple',
+        dragDrop: $('#dragDrop').is(':checked'),
+        browseButton: $('#browseButton').is(':checked'),
+        cameraButton: $('#cameraButton').is(':checked'),
+        showIntroText: $('#showIntroText').is(':checked'),
+        allowFolder: $('#allowFolder').is(':checked'),
+        autoUpload: $('#autoUpload').is(':checked'),
+        progressBar: $('#progressBar').is(':checked'),
+        allowDelete: $('#allowDelete').is(':checked'),
+        uploadAsBase64: $('#uploadAsBase64').is(':checked'),
+        clickReviewAreaToBrowse: $('#clickReviewAreaToBrowse').is(':checked'),
+        useIcon: $('#useIcon').is(':checked'),
+        darkMode: $('#darkMode').is(':checked'),
+        resumable: $('#resumable').is(':checked'),
+        preferFileInput: $('#preferFileInput').is(':checked'),
+        reviewMode: $('#reviewMode').val(),
+        singleModeFit: $('#singleModeFit').val(),
+        reviewPosition: $('#reviewPosition').val(),
+        subfolderLevel: $('#subfolderLevel').val() === '' ? 0 : (parseInt($('#subfolderLevel').val(), 10) >= 0 ? parseInt($('#subfolderLevel').val(), 10) : undefined),
+        errorDelay: parseInt($('#errorDelay').val(), 10),
+        maxFileSize: $('#maxFileSize').val(),
+        chunkSize: $('#chunkSize').val(),
+        fileTypes: $('#fileTypes').val().trim() ? $('#fileTypes').val().split(',').map(s => s.trim()) : undefined,
+        resize: $('#enableResize').is(':checked') ? {
+          maxWidth: parseInt($('#resizeMaxWidth').val(), 10) || 800,
+          maxHeight: parseInt($('#resizeMaxHeight').val(), 10) || 800
+        } : undefined,
+        containerClass: 'my-custom-uploader'
+      };
+
+      console.log('Initializing QUploader with config:', config);
+      $('#upload').quploader(config);
+    }
+
+    $(document).ready(function() {
+      // Generate QR Code for testing on mobile devices
+      const envNgrokUrl = import.meta.env.VITE_NGROK_URL;
+      const testUrl = envNgrokUrl && envNgrokUrl.trim() !== '' ? envNgrokUrl.trim() : window.location.href;
+      const qrContainer = document.getElementById('qrcode-container');
+      const qrLink = document.getElementById('qr-link');
+      if (qrContainer && qrLink) {
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(testUrl)}`;
+        qrContainer.innerHTML = `<img src="${qrApiUrl}" alt="QR Code" style="border: 1px solid #eee; display: block; max-width: 150px;" />`;
+        qrLink.href = testUrl;
+        qrLink.textContent = testUrl;
+      }
+
+      initUploader();
+      $('#apply').on('click', function() {
+        initUploader();
+      });
+      // Auto-apply on config change
+      $('#configForm input, #configForm select').on('change', function() {
+        initUploader();
+      });
+
+      // API Test Buttons
+      $('#btnUploadAll').on('click', function() {
+        $('#upload').quploader('uploadAll');
+      });
+      $('#btnClearQueue').on('click', function() {
+        $('#upload').quploader('clearQueue');
+      });
+      $('#btnGetFiles').on('click', function() {
+        const files = $('#upload').quploader('getFiles');
+        console.log('Current Files in Queue:', files);
+        alert(`Found ${files.length} files in queue. Check browser console for details!`);
+      });
+    });
+  </script>
+</body>
+</html>

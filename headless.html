@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUploader - Headless Uploader Demo</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; }
+    
+    /* Navigation Bar */
+    .navbar {
+      display: flex;
+      background: #1e1e1e;
+      padding: 10px 20px;
+      gap: 15px;
+      align-items: center;
+      border-bottom: 3px solid #007bff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+    .navbar a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .navbar a:hover {
+      background: #333;
+      color: #fff;
+    }
+    .navbar a.active {
+      background: #007bff;
+      color: #fff;
+    }
+    .navbar .logo {
+      color: #007bff;
+      font-size: 18px;
+      font-weight: 800;
+      margin-right: auto;
+      font-family: sans-serif;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    #sidebar { width: 420px; min-width: 420px; padding: 20px; background: #f9f9f9; border-right: 1px solid #ddd; overflow-y: auto; display: flex; flex-direction: column; }
+    h3 { margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 8px; color: #333; }
+    .section { margin-bottom: 24px; }
+    #main { flex: 1; padding: 20px; overflow-y: auto; background: #fff; }
+    
+    pre { font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; margin: 8px 0; background: #272822; color: #f8f8f2; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    code { font-family: 'Consolas', 'Courier New', monospace; background: #eef; padding: 2px 4px; border-radius: 3px; font-size: 12px; color: #d63384; }
+    
+    #base64-preview { margin-top: 25px; margin-bottom: 25px; }
+    #base64-image-container img { max-width: 100%; border: 1px solid #ccc; border-radius: 4px; max-height: 200px; display: block; margin-top: 8px; }
+
+    @media (max-width: 768px) {
+      body { height: auto; overflow: auto; }
+      .app-container { flex-direction: column; overflow: visible; height: auto; }
+      #sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid #ddd; height: auto; overflow: visible; box-sizing: border-box; }
+      #main { flex: none; width: 100%; box-sizing: border-box; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <div class="navbar">
+    <div class="logo">🚀 QUploader</div>
+    <a href="index.html">Basic Uploader</a>
+    <a href="callbacks.html">Callbacks & Console</a>
+    <a href="headless.html" class="active">Headless Uploader</a>
+    <a href="docs.html">Documentation</a>
+  </div>
+
+  <div class="app-container">
+    <div id="sidebar">
+      <div class="section">
+        <h3>Headless Mode API</h3>
+        <div style="font-size: 13px; color: #444; line-height: 1.6;">
+          <p>Headless Mode allows binding QUploader triggers directly to custom DOM elements without rendering default uploader containers, file lists, or status bars.</p>
+          
+          <strong style="color: #007bff; display: block; margin-top: 12px;">1. File Selection Trigger</strong>
+          <p style="margin: 4px 0 8px;">Trigger file pickers on button click:</p>
+          <pre>$('#btn').quploader('browseFile', {
+  autoUpload: false,
+  onPick: (files) => { ... }
+});</pre>
+
+          <strong style="color: #17a2b8; display: block; margin-top: 12px;">2. Folder Selection Trigger</strong>
+          <p style="margin: 4px 0 8px;">Trigger folder structure pickers:</p>
+          <pre>$('#btn').quploader('browseFolder', {
+  autoUpload: false,
+  allowFolder: true,
+  onPick: (files) => { ... }
+});</pre>
+
+          <strong style="color: #fd7e14; display: block; margin-top: 12px;">3. WebRTC Camera Trigger</strong>
+          <p style="margin: 4px 0 8px;">Trigger WebRTC camera capture modal:</p>
+          <pre>$('#btn').quploader('camera', {
+  autoUpload: false,
+  onPick: (files) => { ... }
+});</pre>
+
+          <strong style="color: #28a745; display: block; margin-top: 12px;">4. Drag & Drop Area Trigger</strong>
+          <p style="margin: 4px 0 8px;">Make any container a drag-and-drop zone:</p>
+          <pre>$('#dropzone').quploader('dropzone', {
+  autoUpload: false,
+  onPick: (files) => { ... }
+});</pre>
+        </div>
+      </div>
+    </div>
+
+    <div id="main">
+      <h2>QUploader Headless / No-UI Demo</h2>
+      <p style="color: #666; font-size: 14px;">The buttons below are independent HTML elements initialized in headless mode. Clicking or dropping files triggers the upload flow directly without loading any default QUploader UI wrappers.</p>
+      
+      <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+        <button type="button" id="btnHeadlessBrowse" style="padding: 12px 18px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">Headless Browse File</button>
+        <button type="button" id="btnHeadlessFolder" style="padding: 12px 18px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">Headless Browse Folder</button>
+        <button type="button" id="btnHeadlessCamera" style="padding: 12px 18px; background: #fd7e14; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">Headless Camera</button>
+      </div>
+      <div id="headlessDropzone" style="border: 2px dashed #6c757d; border-radius: 6px; padding: 40px; text-align: center; color: #6c757d; font-weight: bold; background: #f8f9fa; cursor: pointer; font-size: 15px; transition: background 0.2s;">
+        Headless Dropzone (Drag files here)
+      </div>
+
+      <!-- Base64 Preview -->
+      <div id="base64-preview">
+        <strong style="color: #333; font-size: 14px;">Base64 Image Preview (Generated from onPick)</strong>
+        <div id="base64-image-container">
+          <span style="font-size: 12px; color: #999; font-style: italic;">No image captured/selected yet.</span>
+        </div>
+      </div>
+
+      <!-- Unified Event Logs Console -->
+      <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <strong style="color: #333; font-size: 14px;">Real-time Event Logs & Callbacks Console</strong>
+          <button type="button" id="btnClearLogs" style="padding: 6px 12px; font-size: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Clear Console</button>
+        </div>
+        <div id="uploaderLogs" style="background: #1e1e1e; color: #d4d4d4; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; border-radius: 6px; height: 220px; overflow-y: auto; border: 1px solid #333; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5); box-sizing: border-box; position: relative; padding: 0;">
+          <div id="uploaderLogsScrollArea" style="position: absolute; left: 0; right: 0; top: 0; pointer-events: none; height: 0;"></div>
+          <div id="uploaderLogsContent" style="position: absolute; left: 15px; right: 15px; top: 0; box-sizing: border-box; padding-top: 10px; padding-bottom: 10px;">
+            <div style="color: #888; font-style: italic;">[System] Waiting for actions...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import $ from 'jquery';
+    import '/src/quploader.ts';
+
+    $(document).ready(function() {
+      const allLogs = [];
+      const itemHeight = 22;
+      const viewportHeight = 220;
+      const buffer = 5;
+      const paddingTop = 10;
+      const $logs = $('#uploaderLogs');
+
+      function getLogsFromStorage() {
+        try {
+          const stored = sessionStorage.getItem('quploader_logs_page3');
+          if (stored) {
+            return JSON.parse(stored);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        return [];
+      }
+
+      function saveLogsToStorage() {
+        try {
+          sessionStorage.setItem('quploader_logs_page3', JSON.stringify(allLogs));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderLogs() {
+        const $scrollArea = $('#uploaderLogsScrollArea');
+        const $content = $('#uploaderLogsContent');
+
+        if (allLogs.length === 0) {
+          $scrollArea.height(0);
+          $content.html('<div style="color: #888; font-style: italic;">[System] Waiting for actions...</div>');
+          $content.css('transform', 'translateY(0)');
+          return;
+        }
+
+        const totalHeight = allLogs.length * itemHeight + paddingTop * 2;
+        $scrollArea.height(totalHeight);
+
+        const scrollTop = $logs.scrollTop();
+        let startIndex = Math.floor(scrollTop / itemHeight);
+        startIndex = Math.max(0, startIndex - buffer);
+        
+        const visibleCount = Math.ceil(viewportHeight / itemHeight);
+        let endIndex = startIndex + visibleCount + (buffer * 2);
+        endIndex = Math.min(allLogs.length, endIndex);
+
+        const html = [];
+        for (let i = startIndex; i < endIndex; i++) {
+          const log = allLogs[i];
+          const sourceTag = `<span style="color: ${log.sourceColor}; font-weight: bold;">[${log.source}]</span>`;
+          const logMsg = `<span style="color: ${log.typeColor};">${log.message}</span>`;
+          html.push(`<div style="height: ${itemHeight}px; line-height: ${itemHeight}px; margin: 0; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">[${log.time}] ${sourceTag} ${logMsg}</div>`);
+        }
+
+        $content.html(html.join(''));
+        $content.css('transform', `translateY(${startIndex * itemHeight + paddingTop}px)`);
+      }
+
+      function logToUI(message, type = 'info', source = 'System') {
+        const time = new Date().toLocaleTimeString();
+        
+        let sourceColor = '#888888';
+        if (source === 'Main') sourceColor = '#39daff';
+        if (source === 'Headless') sourceColor = '#fd7e14';
+        
+        let typeColor = '#d4d4d4';
+        if (type === 'success') typeColor = '#4caf50';
+        if (type === 'error') typeColor = '#f44336';
+        if (type === 'warning') typeColor = '#ffc107';
+        if (type === 'info') typeColor = '#e0e0e0';
+
+        allLogs.push({ time, source, sourceColor, typeColor, message });
+        saveLogsToStorage();
+
+        const scrollHeight = $logs[0].scrollHeight;
+        const clientHeight = $logs[0].clientHeight;
+        const scrollTop = $logs.scrollTop();
+        const isNearBottom = (scrollHeight - scrollTop - clientHeight) < 50;
+
+        renderLogs();
+
+        if (isNearBottom || allLogs.length === 1) {
+          $logs.scrollTop(allLogs.length * itemHeight + paddingTop * 2);
+        }
+      }
+      window.logToUI = logToUI;
+
+      $('#uploaderLogs').on('scroll', function() {
+        renderLogs();
+      });
+
+      $('#btnClearLogs').on('click', function() {
+        allLogs.length = 0;
+        sessionStorage.removeItem('quploader_logs_page3');
+        renderLogs();
+        $('#base64-image-container').html('<span style="font-size: 12px; color: #999; font-style: italic;">No image captured/selected yet.</span>');
+      });
+
+      function handleBase64Preview(files) {
+        if (files && files.length) {
+          const file = files[0];
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const base64 = e.target.result;
+              const img = document.createElement('img');
+              img.src = base64;
+              const container = document.getElementById('base64-image-container');
+              if (container) {
+                container.innerHTML = '';
+                container.appendChild(img);
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+      }
+
+      // Load initial logs
+      allLogs.push(...getLogsFromStorage());
+      renderLogs();
+      if (allLogs.length > 0) {
+        setTimeout(() => {
+          $logs.scrollTop(allLogs.length * itemHeight + paddingTop * 2);
+        }, 100);
+      }
+
+      // Initialize Headless Browse File
+      $('#btnHeadlessBrowse').quploader('browseFile', {
+        autoUpload: false,
+        onPick: function(files) {
+          handleBase64Preview(files);
+          logToUI(`Picked ${files.length} file(s): ` + Array.from(files).map(f => f.name).join(', '), 'info', 'Headless');
+        }
+      });
+
+      // Initialize Headless Browse Folder
+      $('#btnHeadlessFolder').quploader('browseFolder', {
+        autoUpload: false,
+        allowFolder: true,
+        onPick: function(files) {
+          handleBase64Preview(files);
+          logToUI(`Picked ${files.length} file(s): ` + Array.from(files).map(f => f.name).join(', '), 'info', 'Headless');
+        }
+      });
+
+      // Initialize Headless Camera
+      $('#btnHeadlessCamera').quploader('camera', {
+        autoUpload: false,
+        onPick: function(files) {
+          handleBase64Preview(files);
+          logToUI(`Photo captured: ` + Array.from(files).map(f => f.name).join(', '), 'info', 'Headless');
+        }
+      });
+
+      // Initialize Headless Dropzone
+      $('#headlessDropzone').quploader('dropzone', {
+        autoUpload: false,
+        onPick: function(files) {
+          handleBase64Preview(files);
+          logToUI(`Dropped ${files.length} file(s): ` + Array.from(files).map(f => f.name).join(', '), 'info', 'Headless');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

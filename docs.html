@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUploader - API Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #007bff;
+      --primary-hover: #0056b3;
+      --bg-dark: #1e1e1e;
+      --bg-light: #f8f9fa;
+      --border-color: #e9ecef;
+      --text-main: #333333;
+      --text-muted: #6c757d;
+      --code-bg: #1e1e1e;
+      --code-color: #f8f8f2;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      color: var(--text-main);
+      background-color: #ffffff;
+      overflow: hidden;
+    }
+    
+    /* Navigation Bar */
+    .navbar {
+      display: flex;
+      background: var(--bg-dark);
+      padding: 10px 20px;
+      gap: 15px;
+      align-items: center;
+      border-bottom: 3px solid var(--primary);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+    .navbar a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .navbar a:hover {
+      background: #333;
+      color: #fff;
+    }
+    .navbar a.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .navbar .logo {
+      color: var(--primary);
+      font-size: 18px;
+      font-weight: 800;
+      margin-right: auto;
+      font-family: sans-serif;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar Navigation */
+    #sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--bg-light);
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    #sidebar h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+      margin-top: 0;
+    }
+    #sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 30px 0;
+    }
+    #sidebar li {
+      margin-bottom: 8px;
+    }
+    #sidebar a {
+      display: block;
+      color: #495057;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    #sidebar a:hover {
+      color: var(--primary);
+      background: rgba(0, 123, 255, 0.08);
+      padding-left: 18px;
+    }
+    #sidebar a.active {
+      color: var(--primary);
+      background: rgba(0, 123, 255, 0.1);
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    #main-content {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    .doc-section {
+      margin-bottom: 60px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 40px;
+    }
+    .doc-section:last-child {
+      border-bottom: none;
+      margin-bottom: 100px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #1a1f36;
+    }
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #1a1f36;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+    }
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: #3b4256;
+    }
+    p {
+      line-height: 1.6;
+      font-size: 15px;
+      color: #4e5668;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: var(--code-bg);
+      color: var(--code-color);
+      padding: 18px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin: 15px 0;
+    }
+    code {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      background: #eef1f6;
+      color: #d63384;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+      font-weight: normal;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 25px 0;
+      font-size: 14px;
+      text-align: left;
+    }
+    th {
+      background-color: var(--bg-light);
+      font-weight: 600;
+      color: #3b4256;
+      padding: 12px 16px;
+      border-bottom: 2px solid #dee2e6;
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: #4e5668;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tr:hover td {
+      background-color: rgba(0, 123, 255, 0.02);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-type { background: #e2f0fd; color: #0266c8; }
+    .badge-required { background: #fee2e2; color: #b91c1c; }
+    .badge-optional { background: #f3f4f6; color: #4b5563; }
+    .badge-default { background: #fef3c7; color: #92400e; font-family: monospace; text-transform: none; }
+
+    /* Custom styles for option lists */
+    .option-row-name {
+      font-weight: 600;
+      color: #0f172a;
+      font-family: 'Fira Code', monospace;
+    }
+
+    @media (max-width: 992px) {
+      body { height: auto; overflow: auto; }
+      .app-container { flex-direction: column; overflow: visible; height: auto; }
+      #sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid var(--border-color); height: auto; overflow: visible; padding: 20px; }
+      #main-content { overflow: visible; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <div class="navbar">
+    <div class="logo">🚀 QUploader</div>
+    <a href="index.html">Basic Uploader</a>
+    <a href="callbacks.html">Callbacks & Console</a>
+    <a href="headless.html">Headless Uploader</a>
+    <a href="docs.html" class="active">Documentation</a>
+  </div>
+
+  <div class="app-container">
+    <!-- Sidebar Index -->
+    <div id="sidebar">
+      <h3>QUploader Guide</h3>
+      <ul>
+        <li><a href="#intro" class="active">Introduction</a></li>
+        <li><a href="#quickstart">Quick Start</a></li>
+      </ul>
+
+      <h3>API Reference</h3>
+      <ul>
+        <li><a href="#options">Configuration Options</a></li>
+        <li><a href="#methods">Methods</a></li>
+        <li><a href="#callbacks">Events & Callbacks</a></li>
+        <li><a href="#headless">Headless Mode</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Docs Content -->
+    <div id="main-content">
+      
+      <!-- Introduction Section -->
+      <div id="intro" class="doc-section">
+        <h1>QUploader Documentation</h1>
+        <p>QUploader is a highly flexible, responsive, and customizable jQuery file upload plugin. It provides out-of-the-box support for Drag & Drop, WebRTC Camera captures, Folder Structure uploading with depth limits, Image Auto-Resizing, Base64 encoding, Chunked Resumable uploads, and an innovative Headless API for custom front-end bindings.</p>
+        <p>Built with TypeScript and packaged with Vite, it delivers state-of-the-art uploading capabilities with zero bloated external styling dependencies.</p>
+      </div>
+
+      <!-- Quick Start Section -->
+      <div id="quickstart" class="doc-section">
+        <h2>Quick Start</h2>
+        <p>To initialize QUploader, include jQuery and the QUploader script/CSS in your document. Target a container or a file input element and invoke the plugin method:</p>
+        
+        <h3>HTML Structure</h3>
+        <pre>&lt;!-- Standard container initialization --&gt;
+&lt;div id="uploader"&gt;&lt;/div&gt;
+
+&lt;!-- Or initialize on a file input directly --&gt;
+&lt;input type="file" id="file-uploader" multiple accept="image/*" /&gt;</pre>
+
+        <h3>Javascript Initialization</h3>
+        <pre>import $ from 'jquery';
+import '/src/quploader.ts'; // ESM Import
+
+$(document).ready(function() {
+  $('#uploader').quploader({
+    uploadUrl: '/api/upload',
+    multiple: true,
+    dragDrop: true,
+    maxFileSize: '10MB',
+    fileTypes: ['.jpg', '.png', '.pdf'],
+    onSuccess: function(file, response) {
+      console.log('Successfully uploaded:', file.name);
+    }
+  });
+});</pre>
+      </div>
+
+      <!-- Configuration Options Section -->
+      <div id="options" class="doc-section">
+        <h2>Configuration Options</h2>
+        <p>Customize the uploader behavior by passing an object containing any of the options below during initialization:</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Type / Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="option-row-name">uploadUrl</span><br>
+                <span class="badge badge-required">required</span>
+              </td>
+              <td>
+                <span class="badge badge-type">string</span><br>
+                <span class="badge badge-default">''</span>
+              </td>
+              <td>The API endpoint url where files will be uploaded via POST request. Can be ignored in headless/no-upload flows.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">chunkUploadUrl</span><br>
+                <span class="badge badge-optional">optional</span>
+              </td>
+              <td>
+                <span class="badge badge-type">string</span><br>
+                <span class="badge badge-default">undefined</span>
+              </td>
+              <td>API endpoint specifically dedicated to handling chunk/fragment uploads (used when chunking is triggered).</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">multiple</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">false</span>
+              </td>
+              <td>Whether to allow picking and uploading multiple files concurrently.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">dragDrop</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">true</span>
+              </td>
+              <td>Enables drag-and-drop zone events on the uploader container.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">browseButton</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">true</span>
+              </td>
+              <td>Specifies if the default "Browse File" button is generated in the UI.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">clickReviewAreaToBrowse</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">false</span>
+              </td>
+              <td>If <code>true</code>, clicking inside the file review list triggers the file browse dialog.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">cameraButton</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">false</span>
+              </td>
+              <td>Generates a "Camera" trigger button enabling capturing snapshots directly using the user's WebRTC device.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">showIntroText</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">true</span>
+              </td>
+              <td>Displays default drag-drop instructions inside the container.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">allowFolder</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">false</span>
+              </td>
+              <td>Enables choosing and reading complete nested folder directory structures.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">subfolderLevel</span>
+              </td>
+              <td>
+                <span class="badge badge-type">number</span><br>
+                <span class="badge badge-default">undefined</span>
+              </td>
+              <td>Sets the maximum nesting directory depth allowed when reading folders (e.g. <code>0</code> only reads root files inside the folder).</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">fileTypes</span>
+              </td>
+              <td>
+                <span class="badge badge-type">string[]</span><br>
+                <span class="badge badge-default">[]</span>
+              </td>
+              <td>Array of accepted file extensions or mime categories, e.g. <code>['.png', '.jpeg', 'image/*']</code>.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">maxFileSize</span>
+              </td>
+              <td>
+                <span class="badge badge-type">number | string</span><br>
+                <span class="badge badge-default">10MB</span>
+              </td>
+              <td>Maximum file size limit. Supports bytes (number) or strings like <code>'5MB'</code>, <code>'500KB'</code>.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">chunkSize</span>
+              </td>
+              <td>
+                <span class="badge badge-type">number | string</span><br>
+                <span class="badge badge-default">undefined</span>
+              </td>
+              <td>If configured, splits files exceeding this size into chunk segments uploaded individually (e.g. <code>'2MB'</code>).</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">retry</span>
+              </td>
+              <td>
+                <span class="badge badge-type">number</span><br>
+                <span class="badge badge-default">3</span>
+              </td>
+              <td>Maximum retry attempts per chunk upload segment in case of server timeouts or network failures.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">deleteUrl</span>
+              </td>
+              <td>
+                <span class="badge badge-type">string</span><br>
+                <span class="badge badge-default">undefined</span>
+              </td>
+              <td>API endpoint invoked via POST containing <code>{ key: serverKey }</code> when a successfully uploaded file is deleted.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">reviewMode</span>
+              </td>
+              <td>
+                <span class="badge badge-type">string</span><br>
+                <span class="badge badge-default">'thumbnail'</span>
+              </td>
+              <td>UI Layout mode for file list: <code>'thumbnail'</code> (grid layout), <code>'detail'</code> (detailed linear list), or <code>'single'</code> (fills container, ideal for single avatar/image uploads).</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">reviewPosition</span>
+              </td>
+              <td>
+                <span class="badge badge-type">string</span><br>
+                <span class="badge badge-default">'below'</span>
+              </td>
+              <td>Position of the preview list container relative to the upload trigger area: <code>'below'</code>, <code>'above'</code>, or <code>'none'</code>.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">errorDelay</span>
+              </td>
+              <td>
+                <span class="badge badge-type">number</span><br>
+                <span class="badge badge-default">3000</span>
+              </td>
+              <td>Time in milliseconds to show local validation errors before auto-fading them.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">resize</span>
+              </td>
+              <td>
+                <span class="badge badge-type">object</span><br>
+                <span class="badge badge-default">undefined</span>
+              </td>
+              <td>Object structure: <code>{ maxWidth: 800, maxHeight: 600 }</code>. Client-side downsizes image files prior to transmission.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">autoUpload</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">true</span>
+              </td>
+              <td>If <code>true</code>, begins transferring files to server automatically immediately after they are queued.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">uploadAsBase64</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">false</span>
+              </td>
+              <td>If set to <code>true</code>, posts files as JSON-payload base64 data structures rather than traditional multi-part Form Data.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">darkMode</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean | 'auto'</span><br>
+                <span class="badge badge-default">false</span>
+              </td>
+              <td>Enables the built-in modern dark-mode stylesheet palette. Setting to <code>'auto'</code> matches system dark queries.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">resumable</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">true</span>
+              </td>
+              <td>Enables saving chunk upload markers to localStorage to allow resuming partially finished files on reconnect.</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="option-row-name">preferFileInput</span>
+              </td>
+              <td>
+                <span class="badge badge-type">boolean</span><br>
+                <span class="badge badge-default">true</span>
+              </td>
+              <td>Uses standard hidden input clicks to browse files. If set to <code>false</code>, leverages the modern File System Access API where supported.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Methods Section -->
+      <div id="methods" class="doc-section">
+        <h2>API Methods</h2>
+        <p>Methods are called imperatively on an already initialized QUploader instance by passing the method name as a string to the jQuery selector:</p>
+
+        <h3><code>uploadAll</code></h3>
+        <p>Triggers/forces uploading of all currently queued files having <code>pending</code> or <code>error</code> statuses.</p>
+        <pre>$('#uploader').quploader('uploadAll');</pre>
+
+        <h3><code>clearQueue</code></h3>
+        <p>Clears the entire file queue, cancels pending XMLHttpRequests, and sends server deletion requests for successfully uploaded items.</p>
+        <pre>$('#uploader').quploader('clearQueue');</pre>
+
+        <h3><code>getFiles</code></h3>
+        <p>Returns an array containing all files currently managed by the uploader context. Each file includes properties like <code>status</code>, <code>progress</code>, and custom helper methods.</p>
+        <pre>const fileList = $('#uploader').quploader('getFiles');
+console.log(fileList);</pre>
+
+        <h3><code>browseFile</code></h3>
+        <p>Triggers the file browse picker dialog. Highly useful for Headless mode.</p>
+        <pre>$('#myButton').quploader('browseFile');</pre>
+
+        <h3><code>browseFolder</code></h3>
+        <p>Triggers the folder selection picker dialog.</p>
+        <pre>$('#myButton').quploader('browseFolder');</pre>
+
+        <h3><code>camera</code></h3>
+        <p>Triggers the browser WebRTC modal dialog permitting immediate snap captures.</p>
+        <pre>$('#myButton').quploader('camera');</pre>
+      </div>
+
+      <!-- Callbacks & Events Section -->
+      <div id="callbacks" class="doc-section">
+        <h2>Events & Callbacks</h2>
+        <p>Capture lifecycles and hook details by defining callback functions during initialization:</p>
+
+        <h3><code>onPick(files)</code></h3>
+        <p>Executed immediately when files are selected by the user, before validation and UI rendering. Received parameter is a native <code>File[]</code> list.</p>
+        <pre>$('#uploader').quploader({
+  onPick: function(files) {
+    console.log("Picked files count:", files.length);
+  }
+});</pre>
+
+        <h3><code>onValidate(file)</code></h3>
+        <p>A custom validator hook. Returning <code>false</code> rejects the file from entering the upload queue.</p>
+        <pre>$('#uploader').quploader({
+  onValidate: function(file) {
+    if (file.name.includes('restricted')) {
+      alert('This file is restricted.');
+      return false;
+    }
+    return true;
+  }
+});</pre>
+
+        <h3><code>onUploadStart(file)</code></h3>
+        <p>Fires when a file begins the HTTP upload process.</p>
+        <pre>$('#uploader').quploader({
+  onUploadStart: function(file) {
+    console.log("Uploading file:", file.name);
+  }
+});</pre>
+
+        <h3><code>onProgress(file, progress)</code></h3>
+        <p>Triggered continuously during transfer. The <code>progress</code> parameter is a rounded integer from <code>0</code> to <code>100</code>.</p>
+        <pre>$('#uploader').quploader({
+  onProgress: function(file, progress) {
+    console.log(`Progress for ${file.name}: ${progress}%`);
+  }
+});</pre>
+
+        <h3><code>onSuccess(file, response)</code></h3>
+        <p>Invoked when the server returns a successful response code (2xx). <code>response</code> is the parsed JSON/string payload from the server.</p>
+        <pre>$('#uploader').quploader({
+  onSuccess: function(file, response) {
+    console.log("Server response:", response);
+  }
+});</pre>
+
+        <h3><code>onError(file, error)</code></h3>
+        <p>Triggers if a file fails client-side limits, local validator checks, or encounters network/upload errors.</p>
+        <pre>$('#uploader').quploader({
+  onError: function(file, error) {
+    console.error(`Error on file ${file.name}: ${error}`);
+  }
+});</pre>
+
+        <h3><code>onDeleted(file)</code></h3>
+        <p>Triggered when a file is successfully deleted from the local client-side queue list.</p>
+        <pre>$('#uploader').quploader({
+  onDeleted: function(file) {
+    console.log("Removed file:", file.name);
+  }
+});</pre>
+      </div>
+
+      <!-- Headless Mode Section -->
+      <div id="headless" class="doc-section">
+        <h2>Headless Mode</h2>
+        <p>Headless Mode allows you to tie file pickers, camera triggers, drag-and-drop zones, or folder selections to <strong>any arbitrary HTML element of your choice</strong> without loading the default uploader containers, file lists, or status bars.</p>
+        <p>This allows full control over the UI, letting you build custom file grids, overlays, or upload lists while delegating selection, validation, and chunked uploads to QUploader.</p>
+
+        <h3>Initializing Headless Triggers</h3>
+        <p>To initialize elements in headless mode, call quploader by passing the trigger mode name as the first argument, and configuring options in the second argument. <code>headless: true</code> is applied automatically.</p>
+
+        <pre>// Bind browse file picker to a custom button
+$('#myButton').quploader('browseFile', {
+  autoUpload: false,
+  onPick: function(files) {
+    console.log("Files chosen:", files);
+  }
+});
+
+// Turn a custom div into a drag and drop zone
+$('#myDropArea').quploader('dropzone', {
+  autoUpload: false,
+  onPick: function(files) {
+    console.log("Files dropped:", files);
+  }
+});</pre>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import $ from 'jquery';
+    
+    $(document).ready(function() {
+      // TOC scroll tracking spy
+      const $sections = $('.doc-section');
+      const $sidebarLinks = $('#sidebar ul li a');
+      const $main = $('#main-content');
+
+      $main.on('scroll', function() {
+        let currentId = '';
+        const scrollPosition = $main.scrollTop() + 100;
+
+        $sections.each(function() {
+          const top = this.offsetTop;
+          const height = this.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            currentId = '#' + $(this).attr('id');
+          }
+        });
+
+        if (currentId) {
+          $sidebarLinks.removeClass('active');
+          $sidebarLinks.filter(`[href="${currentId}"]`).addClass('active');
+        }
+      });
+      
+      // Smooth scroll adjustment for sidebar links
+      $sidebarLinks.on('click', function(e) {
+        e.preventDefault();
+        const targetId = $(this).attr('href');
+        const $target = $(targetId);
+        
+        if ($target.length) {
+          $main.animate({
+            scrollTop: $target[0].offsetTop - 20
+          }, 400);
+          
+          window.location.hash = targetId;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
