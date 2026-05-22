@@ -65,13 +65,14 @@ This produces `dist/quploader.min.js` which you can reference directly in your w
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `uploadUrl` | `string` | `''` | Target URL for regular uploads. |
+| `uploadUrl` | `string` | `''` | (Optional) Target URL for regular uploads. Can be empty for pick-only/headless flows. |
 | `chunkUploadUrl` | `string` | `undefined` | Target URL for chunked uploads. |
 | `cancelUrl` | `string` | `undefined` | Endpoint invoked upon client aborting/cancelling active uploads. |
 | `deleteUrl` | `string` | `undefined` | Endpoint invoked when deleting completed uploads on the server. |
 | `multiple` | `boolean` | `true` | Allows selecting/picking multiple files. |
 | `dragDrop` | `boolean` | `true` | Enables drop-zone events on the main container. |
 | `browseButton` | `boolean` | `true` | Renders a standard file browse trigger button. |
+| `clickReviewAreaToBrowse` | `boolean` | `false` | Click inside review area triggers the file browse dialog. |
 | `cameraButton` | `boolean` | `false` | Enables WebRTC camera capture controls. |
 | `showIntroText` | `boolean` | `true` | Renders the instruction placeholder text. |
 | `allowFolder` | `boolean` | `false` | Allows dropping or choosing directories. |
@@ -96,6 +97,9 @@ This produces `dist/quploader.min.js` which you can reference directly in your w
 | `useIcon` | `boolean` | `false` | Replaces text labels on control buttons with icons. |
 | `darkMode` | `boolean \| 'auto'` | `false` | Sets Dark Mode theme. `'auto'` binds to OS color settings. |
 | `resumable` | `boolean` | `true` | Caches chunk indices in local storage to resume interrupted uploads. |
+| `preferFileInput` | `boolean` | `true` | Uses HTML standard input clicks. If `false`, tries File System Access API where supported. |
+| `headless` | `boolean` | `false` | Set to `true` to bind uploader triggers to custom UI elements. |
+| `mode` | `string` | `undefined` | Headless mode trigger type: `'browseFile'`, `'browseFolder'`, `'camera'`, or `'dropzone'`. |
 
 ---
 
@@ -114,6 +118,11 @@ const files = $('#myUploader').quploader('getFiles');
 
 // Get the active file (primarily for single selection configurations)
 const currentFile = $('#myUploader').quploader('currentFile');
+
+// Imperatively trigger pickers in headless mode
+$('#myUploader').quploader('browseFile');
+$('#myUploader').quploader('browseFolder');
+$('#myUploader').quploader('camera');
 ```
 
 ---
@@ -156,3 +165,59 @@ const base64Resized = await file.toResizedBase64({ maxWidth: 500, maxHeight: 500
 - `onBeforeDelete(file)`: Fired before server deletion. Return `false` to block deletion.
 - `onServerDeleted(file, response)`: Server-side deletion callback.
 - `onDeleted(file)`: Called after a file is removed from queue/UI.
+
+---
+
+## 🙈 Headless Mode
+
+Headless Mode lets you bind file picking, directory selection, camera captures, or drop events directly to your own custom DOM elements (such as buttons, inputs, or divs) without rendering any default QUploader markup or file cards.
+
+```javascript
+// 1. File picker button
+$('#btnBrowse').quploader('browseFile', {
+  autoUpload: false,
+  onPick: (files) => {
+    console.log("Selected:", files);
+  }
+});
+
+// 2. Drag & drop zone
+$('#dropArea').quploader('dropzone', {
+  autoUpload: false,
+  onPick: (files) => {
+    console.log("Dropped:", files);
+  }
+});
+```
+
+---
+
+## 🌐 Testing Demos
+
+The repository includes a multi-page sandbox architecture to test all features easily.
+
+### Local Server Setup
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+3. Open the output localhost link in your browser.
+
+### Mobile & Remote Testing with Ngrok
+To test features like Camera WebRTC and remote uploads directly on a mobile device, a secure HTTPS tunnel is needed.
+1. Run your tunnel (e.g. `ngrok http 5173`).
+2. Update the Ngrok tunnel address in the `.env` file at the root level of your project:
+   ```env
+   VITE_NGROK_URL=https://<your-ngrok-subdomain>.ngrok-free.app
+   ```
+3. Once configured, the main sandbox page (`index.html`) will automatically render a **QR Code** pointing to this public HTTPS URL. Scan the QR code on your mobile device to test.
+
+### Available Sandbox Pages
+* **Basic Uploader** (`index.html`): Tests core configurations, dark-mode switches, limits, and standard progress bar grids.
+* **Callbacks & Console** (`callbacks.html`): Tests interactive event handlers with editable javascript callback areas, Base64 image previews, and virtual-scroll event logs.
+* **Headless Uploader** (`headless.html`): Tests custom DOM elements, custom drop-zones, and WebRTC cameras initialized in headless mode.
+* **Documentation** (`docs.html`): The detailed, readable API reference guide built directly into the local dashboard.

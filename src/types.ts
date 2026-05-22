@@ -5,7 +5,7 @@ export namespace QUploader {
   }
 
   export interface Options {
-    uploadUrl: string;
+    uploadUrl?: string;
     chunkUploadUrl?: string;
     multiple?: boolean;
     dragDrop?: boolean;
