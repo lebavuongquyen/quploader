@@ -1,5 +1,12 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from 'vitest';
+import { beforeAll, describe, it, expect, vi } from 'vitest';
+import $ from 'jquery';
+
+beforeAll(async () => {
+  (window as any).$ = (window as any).jQuery = $;
+  // Dynamically import quploader to ensure window.$ is available first
+  await import('./quploader');
+});
 
 describe('QUploader Core & Options Parsing', () => {
   it('should parse size strings into bytes correctly', async () => {
@@ -105,5 +112,27 @@ describe('QUploader Validation Logic', () => {
 
     expect(uploader.files.length).toBe(0);
     expect(errorCallback).toHaveBeenCalled();
+  });
+});
+
+describe('QUploader jQuery Compatibility Wrapper', () => {
+  it('should register and initialize successfully via jQuery plugin syntax', async () => {
+    const element = document.createElement('div');
+    document.body.appendChild(element);
+
+    const $el = $(element);
+    $el.quploader({
+      maxFileSize: '10MB'
+    });
+
+    const instance = $el.data('plugin_quploader');
+    expect(instance).toBeDefined();
+    expect(instance.options.maxFileSize).toBe(10 * 1024 * 1024);
+
+    // Call public methods via jQuery syntax
+    const files = $el.quploader('getFiles');
+    expect(files).toEqual([]);
+
+    document.body.removeChild(element);
   });
 });
