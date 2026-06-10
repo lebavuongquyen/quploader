@@ -195,18 +195,17 @@
   </div>
 
   <script type="module">
-    import $ from 'jquery';
-    window.$ = window.jQuery = $;
-  </script>
-  <script type="module">
-    import $ from 'jquery';
-    import '/src/quploader.ts';
+    import { QUploader } from '/src/quploader.ts';
+    
+    let uploaderInstance = null;
 
     function initUploader() {
       // Clean up DOM for a fresh init
-      $('#uploadContainer').empty().append('<div id="upload"></div>');
+      const container = document.getElementById('uploadContainer');
+      container.innerHTML = '<div id="upload"></div>';
       
-      const mode = $('input[name="selectionMode"]:checked').val();
+      const modeEl = document.querySelector('input[name="selectionMode"]:checked');
+      const mode = modeEl ? modeEl.value : 'single';
 
       const config = {
         uploadUrl: import.meta.env.VITE_UPLOAD_URL || '/api/upload',
@@ -214,63 +213,86 @@
         cancelUrl: import.meta.env.VITE_CANCEL_URL || '/api/cancel',
         deleteUrl: import.meta.env.VITE_DELETE_URL || '/api/delete',
         multiple: mode === 'multiple',
-        dragDrop: $('#dragDrop').is(':checked'),
-        browseButton: $('#browseButton').is(':checked'),
-        cameraButton: $('#cameraButton').is(':checked'),
-        showIntroText: $('#showIntroText').is(':checked'),
-        allowFolder: $('#allowFolder').is(':checked'),
-        autoUpload: $('#autoUpload').is(':checked'),
-        progressBar: $('#progressBar').is(':checked'),
-        allowDelete: $('#allowDelete').is(':checked'),
-        uploadAsBase64: $('#uploadAsBase64').is(':checked'),
-        clickReviewAreaToBrowse: $('#clickReviewAreaToBrowse').is(':checked'),
-        useIcon: $('#useIcon').is(':checked'),
-        darkMode: $('#darkMode').is(':checked'),
-        resumable: $('#resumable').is(':checked'),
-        preferFileInput: $('#preferFileInput').is(':checked'),
-        reviewMode: $('#reviewMode').val(),
-        singleModeFit: $('#singleModeFit').val(),
-        reviewPosition: $('#reviewPosition').val(),
-        subfolderLevel: $('#subfolderLevel').val() === '' ? 0 : (parseInt($('#subfolderLevel').val(), 10) >= 0 ? parseInt($('#subfolderLevel').val(), 10) : undefined),
-        errorDelay: parseInt($('#errorDelay').val(), 10),
-        maxFileSize: $('#maxFileSize').val(),
-        chunkSize: $('#chunkSize').val(),
-        fileTypes: $('#fileTypes').val().trim() ? $('#fileTypes').val().split(',').map(s => s.trim()) : undefined,
-        resize: $('#enableResize').is(':checked') ? {
-          maxWidth: parseInt($('#resizeMaxWidth').val(), 10) || 800,
-          maxHeight: parseInt($('#resizeMaxHeight').val(), 10) || 800
+        dragDrop: document.getElementById('dragDrop').checked,
+        browseButton: document.getElementById('browseButton').checked,
+        cameraButton: document.getElementById('cameraButton').checked,
+        showIntroText: document.getElementById('showIntroText').checked,
+        allowFolder: document.getElementById('allowFolder').checked,
+        autoUpload: document.getElementById('autoUpload').checked,
+        progressBar: document.getElementById('progressBar').checked,
+        allowDelete: document.getElementById('allowDelete').checked,
+        uploadAsBase64: document.getElementById('uploadAsBase64').checked,
+        clickReviewAreaToBrowse: document.getElementById('clickReviewAreaToBrowse').checked,
+        useIcon: document.getElementById('useIcon').checked,
+        darkMode: document.getElementById('darkMode').checked,
+        resumable: document.getElementById('resumable').checked,
+        preferFileInput: document.getElementById('preferFileInput').checked,
+        reviewMode: document.getElementById('reviewMode').value,
+        singleModeFit: document.getElementById('singleModeFit').value,
+        reviewPosition: document.getElementById('reviewPosition').value,
+        subfolderLevel: document.getElementById('subfolderLevel').value === '' ? 0 : (parseInt(document.getElementById('subfolderLevel').value, 10) >= 0 ? parseInt(document.getElementById('subfolderLevel').value, 10) : undefined),
+        errorDelay: parseInt(document.getElementById('errorDelay').value, 10),
+        maxFileSize: document.getElementById('maxFileSize').value,
+        chunkSize: document.getElementById('chunkSize').value,
+        fileTypes: document.getElementById('fileTypes').value.trim() ? document.getElementById('fileTypes').value.split(',').map(s => s.trim()) : undefined,
+        resize: document.getElementById('enableResize').checked ? {
+          maxWidth: parseInt(document.getElementById('resizeMaxWidth').value, 10) || 800,
+          maxHeight: parseInt(document.getElementById('resizeMaxHeight').value, 10) || 800
         } : undefined,
         containerClass: 'my-custom-uploader'
       };
 
       console.log('Initializing QUploader with config:', config);
-      $('#upload').quploader(config);
+      uploaderInstance = new QUploader(document.getElementById('upload'), config);
     }
 
-    $(document).ready(function() {
-
-
+    document.addEventListener('DOMContentLoaded', function() {
       initUploader();
-      $('#apply').on('click', function() {
-        initUploader();
-      });
+      
+      const applyBtn = document.getElementById('apply');
+      if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+          initUploader();
+        });
+      }
+      
       // Auto-apply on config change
-      $('#configForm input, #configForm select').on('change', function() {
-        initUploader();
+      const inputs = document.querySelectorAll('#configForm input, #configForm select');
+      inputs.forEach(input => {
+        input.addEventListener('change', function() {
+          initUploader();
+        });
       });
 
       // API Test Buttons
-      $('#btnUploadAll').on('click', function() {
-        $('#upload').quploader('uploadAll');
-      });
-      $('#btnClearQueue').on('click', function() {
-        $('#upload').quploader('clearQueue');
-      });
-      $('#btnGetFiles').on('click', function() {
-        const files = $('#upload').quploader('getFiles');
-        console.log('Current Files in Queue:', files);
-        alert(`Found ${files.length} files in queue. Check browser console for details!`);
-      });
+      const btnUploadAll = document.getElementById('btnUploadAll');
+      if (btnUploadAll) {
+        btnUploadAll.addEventListener('click', function() {
+          if (uploaderInstance) {
+            uploaderInstance.uploadAll();
+          }
+        });
+      }
+      
+      const btnClearQueue = document.getElementById('btnClearQueue');
+      if (btnClearQueue) {
+        btnClearQueue.addEventListener('click', function() {
+          if (uploaderInstance) {
+            uploaderInstance.clearQueue();
+          }
+        });
+      }
+      
+      const btnGetFiles = document.getElementById('btnGetFiles');
+      if (btnGetFiles) {
+        btnGetFiles.addEventListener('click', function() {
+          if (uploaderInstance) {
+            const files = uploaderInstance.getFiles();
+            console.log('Current Files in Queue:', files);
+            alert(`Found ${files.length} files in queue. Check browser console for details!`);
+          }
+        });
+      }
     });
   </script>
 </body>

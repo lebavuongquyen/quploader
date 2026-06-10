@@ -850,51 +850,7 @@ class QUploader implements Types.QUploader.CoreContext {
   }
 }
 
-// Register jQuery Plugin for backwards-compatibility
-if (typeof window !== 'undefined') {
-  const jQuery = (window as any).jQuery || (window as any).$;
-  if (jQuery) {
-    jQuery.fn.quploader = function(this: any, options?: any, ...args: any[]) {
-      const self = this;
-      if (typeof options === 'string') {
-        let returnValue: any = self;
-        const headlessModes = ['browseFile', 'browseFolder', 'camera', 'dropzone'];
-        this.each(function(this: HTMLElement) {
-          let instance = jQuery.data(this, 'plugin_quploader');
-          
-          if (!instance && headlessModes.includes(options)) {
-            const config = Object.assign({}, typeof args[0] === 'object' ? args[0] : {}, {
-              headless: true,
-              mode: options
-            });
-            instance = new QUploader(this, config);
-            jQuery.data(this, 'plugin_quploader', instance);
-          }
-          
-          if (instance && typeof (instance as any)[options] === 'function') {
-            const hasConfig = args.length > 0 && typeof args[0] === 'object';
-            if (!hasConfig || (instance as any)._initializedBefore) {
-              const methodArgs = hasConfig ? args.slice(1) : args;
-              const res = (instance as any)[options].apply(instance, methodArgs);
-              if (returnValue === self) {
-                returnValue = res;
-              }
-            }
-            (instance as any)._initializedBefore = true;
-          }
-        });
-        return returnValue;
-      }
-      return this.each(function(this: HTMLElement) {
-        if (!jQuery.data(this, 'plugin_quploader')) {
-          const uploader = new QUploader(this, options);
-          (uploader as any)._initializedBefore = true;
-          jQuery.data(this, 'plugin_quploader', uploader);
-        }
-      });
-    };
-  }
-}
+
 
 namespace QUploader {
   export type ResizeOptions = Types.QUploader.ResizeOptions;

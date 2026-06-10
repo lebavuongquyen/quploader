@@ -154,20 +154,15 @@
   </div>
 
   <script type="module">
-    import $ from 'jquery';
-    window.$ = window.jQuery = $;
-  </script>
-  <script type="module">
-    import $ from 'jquery';
-    import '/src/quploader.ts';
+    import { QUploader } from '/src/quploader.ts';
 
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
       const allLogs = [];
       const itemHeight = 22;
       const viewportHeight = 220;
       const buffer = 5;
       const paddingTop = 10;
-      const $logs = $('#uploaderLogs');
+      const logsEl = document.getElementById('uploaderLogs');
 
       function getLogsFromStorage() {
         try {
@@ -190,20 +185,20 @@
       }
 
       function renderLogs() {
-        const $scrollArea = $('#uploaderLogsScrollArea');
-        const $content = $('#uploaderLogsContent');
+        const scrollAreaEl = document.getElementById('uploaderLogsScrollArea');
+        const contentEl = document.getElementById('uploaderLogsContent');
 
         if (allLogs.length === 0) {
-          $scrollArea.height(0);
-          $content.html('<div style="color: #888; font-style: italic;">[System] Waiting for actions...</div>');
-          $content.css('transform', 'translateY(0)');
+          scrollAreaEl.style.height = '0px';
+          contentEl.innerHTML = '<div style="color: #888; font-style: italic;">[System] Waiting for actions...</div>';
+          contentEl.style.transform = 'translateY(0px)';
           return;
         }
 
         const totalHeight = allLogs.length * itemHeight + paddingTop * 2;
-        $scrollArea.height(totalHeight);
+        scrollAreaEl.style.height = `${totalHeight}px`;
 
-        const scrollTop = $logs.scrollTop();
+        const scrollTop = logsEl.scrollTop;
         let startIndex = Math.floor(scrollTop / itemHeight);
         startIndex = Math.max(0, startIndex - buffer);
         
@@ -219,8 +214,8 @@
           html.push(`<div style="height: ${itemHeight}px; line-height: ${itemHeight}px; margin: 0; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">[${log.time}] ${sourceTag} ${logMsg}</div>`);
         }
 
-        $content.html(html.join(''));
-        $content.css('transform', `translateY(${startIndex * itemHeight + paddingTop}px)`);
+        contentEl.innerHTML = html.join('');
+        contentEl.style.transform = `translateY(${startIndex * itemHeight + paddingTop}px)`;
       }
 
       function logToUI(message, type = 'info', source = 'System') {
@@ -239,28 +234,28 @@
         allLogs.push({ time, source, sourceColor, typeColor, message });
         saveLogsToStorage();
 
-        const scrollHeight = $logs[0].scrollHeight;
-        const clientHeight = $logs[0].clientHeight;
-        const scrollTop = $logs.scrollTop();
+        const scrollHeight = logsEl.scrollHeight;
+        const clientHeight = logsEl.clientHeight;
+        const scrollTop = logsEl.scrollTop;
         const isNearBottom = (scrollHeight - scrollTop - clientHeight) < 50;
 
         renderLogs();
 
         if (isNearBottom || allLogs.length === 1) {
-          $logs.scrollTop(allLogs.length * itemHeight + paddingTop * 2);
+          logsEl.scrollTop = allLogs.length * itemHeight + paddingTop * 2;
         }
       }
       window.logToUI = logToUI;
 
-      $('#uploaderLogs').on('scroll', function() {
+      logsEl.addEventListener('scroll', function() {
         renderLogs();
       });
 
-      $('#btnClearLogs').on('click', function() {
+      document.getElementById('btnClearLogs').addEventListener('click', function() {
         allLogs.length = 0;
         sessionStorage.removeItem('quploader_logs_page3');
         renderLogs();
-        $('#base64-image-container').html('<span style="font-size: 12px; color: #999; font-style: italic;">No image captured/selected yet.</span>');
+        document.getElementById('base64-image-container').innerHTML = '<span style="font-size: 12px; color: #999; font-style: italic;">No image captured/selected yet.</span>';
       });
 
       function handleBase64Preview(files) {
@@ -288,12 +283,14 @@
       renderLogs();
       if (allLogs.length > 0) {
         setTimeout(() => {
-          $logs.scrollTop(allLogs.length * itemHeight + paddingTop * 2);
+          logsEl.scrollTop = allLogs.length * itemHeight + paddingTop * 2;
         }, 100);
       }
 
       // Initialize Headless Browse File
-      $('#btnHeadlessBrowse').quploader('browseFile', {
+      new QUploader(document.getElementById('btnHeadlessBrowse'), {
+        headless: true,
+        mode: 'browseFile',
         autoUpload: false,
         onPick: function(files) {
           handleBase64Preview(files);
@@ -302,7 +299,9 @@
       });
 
       // Initialize Headless Browse Folder
-      $('#btnHeadlessFolder').quploader('browseFolder', {
+      new QUploader(document.getElementById('btnHeadlessFolder'), {
+        headless: true,
+        mode: 'browseFolder',
         autoUpload: false,
         allowFolder: true,
         onPick: function(files) {
@@ -312,7 +311,9 @@
       });
 
       // Initialize Headless Camera
-      $('#btnHeadlessCamera').quploader('camera', {
+      new QUploader(document.getElementById('btnHeadlessCamera'), {
+        headless: true,
+        mode: 'camera',
         autoUpload: false,
         onPick: function(files) {
           handleBase64Preview(files);
@@ -321,7 +322,9 @@
       });
 
       // Initialize Headless Dropzone
-      $('#headlessDropzone').quploader('dropzone', {
+      new QUploader(document.getElementById('headlessDropzone'), {
+        headless: true,
+        mode: 'dropzone',
         autoUpload: false,
         onPick: function(files) {
           handleBase64Preview(files);

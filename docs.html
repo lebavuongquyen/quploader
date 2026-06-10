@@ -712,45 +712,52 @@ $('#myDropArea').quploader('dropzone', {
   </div>
 
   <script type="module">
-    import $ from 'jquery';
-    
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
       // TOC scroll tracking spy
-      const $sections = $('.doc-section');
-      const $sidebarLinks = $('#sidebar ul li a');
-      const $main = $('#main-content');
+      const sections = document.querySelectorAll('.doc-section');
+      const sidebarLinks = document.querySelectorAll('#sidebar ul li a');
+      const main = document.getElementById('main-content');
 
-      $main.on('scroll', function() {
-        let currentId = '';
-        const scrollPosition = $main.scrollTop() + 100;
+      if (main) {
+        main.addEventListener('scroll', function() {
+          let currentId = '';
+          const scrollPosition = main.scrollTop + 100;
 
-        $sections.each(function() {
-          const top = this.offsetTop;
-          const height = this.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            currentId = '#' + $(this).attr('id');
+          sections.forEach(section => {
+            const top = section.offsetTop;
+            const height = section.offsetHeight;
+            if (scrollPosition >= top && scrollPosition < top + height) {
+              currentId = '#' + section.getAttribute('id');
+            }
+          });
+
+          if (currentId) {
+            sidebarLinks.forEach(link => {
+              link.classList.remove('active');
+              if (link.getAttribute('href') === currentId) {
+                link.classList.add('active');
+              }
+            });
           }
         });
-
-        if (currentId) {
-          $sidebarLinks.removeClass('active');
-          $sidebarLinks.filter(`[href="${currentId}"]`).addClass('active');
-        }
-      });
+      }
       
       // Smooth scroll adjustment for sidebar links
-      $sidebarLinks.on('click', function(e) {
-        e.preventDefault();
-        const targetId = $(this).attr('href');
-        const $target = $(targetId);
-        
-        if ($target.length) {
-          $main.animate({
-            scrollTop: $target[0].offsetTop - 20
-          }, 400);
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = link.getAttribute('href');
+          const target = document.querySelector(targetId);
           
-          window.location.hash = targetId;
-        }
+          if (target && main) {
+            main.scrollTo({
+              top: target.offsetTop - 20,
+              behavior: 'smooth'
+            });
+            
+            window.location.hash = targetId;
+          }
+        });
       });
     });
   </script>

@@ -1,11 +1,5 @@
 // @vitest-environment happy-dom
-import { beforeAll, describe, it, expect, vi } from 'vitest';
-import $ from 'jquery';
-
-beforeAll(async () => {
-  (window as any).$ = (window as any).jQuery = $;
-  await import('./quploader');
-});
+import { describe, it, expect, vi } from 'vitest';
 
 function createTestDiv(): HTMLElement {
   const div = document.createElement('div');
