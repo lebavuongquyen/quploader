@@ -11,11 +11,12 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static(__dirname));
 
-const uploadDir = path.join(__dirname, 'uploads');
-const tempDir = path.join(__dirname, 'temp');
+const isVercel = !!process.env.VERCEL;
+const uploadDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+const tempDir = isVercel ? '/tmp/temp' : path.join(__dirname, 'temp');
 
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
 const upload = multer({ dest: tempDir });
 
@@ -183,8 +184,12 @@ app.post('/api/delete', (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Test server running at http://localhost:${PORT}`);
-  console.log('Use this port to test the uploader UI with actual backend integration.');
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Test server running at http://localhost:${PORT}`);
+    console.log('Use this port to test the uploader UI with actual backend integration.');
+  });
+}
+
+module.exports = app;

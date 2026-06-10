@@ -73,8 +73,8 @@ export namespace QUploader {
   export interface CoreContext {
     options: Options;
     files: File[];
-    $container: JQuery;
-    $reviewArea: JQuery;
+    container: HTMLElement;
+    reviewArea: HTMLElement | null;
     handleFiles(files: globalThis.File[]): void;
     removeFile(id: string, force?: boolean): Promise<void>;
     updateFileStatus(id: string, status: 'pending' | 'uploading' | 'success' | 'error', errorMsg?: string): void;

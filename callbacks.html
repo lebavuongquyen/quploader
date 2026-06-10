@@ -292,6 +292,10 @@
 
   <script type="module">
     import $ from 'jquery';
+    window.$ = window.jQuery = $;
+  </script>
+  <script type="module">
+    import $ from 'jquery';
     import '/src/quploader.ts';
 
     window.qUploaderEvents = {};
@@ -349,10 +353,10 @@
       const onDeleted = registerEventScript('onDeleted', 'file', $('#cb_onDeleted').val());
 
       const config = {
-        uploadUrl: '/api/upload',
-        chunkUploadUrl: '/api/chunk-upload',
-        cancelUrl: '/api/cancel',
-        deleteUrl: '/api/delete',
+        uploadUrl: import.meta.env.VITE_UPLOAD_URL || '/api/upload',
+        chunkUploadUrl: import.meta.env.VITE_CHUNK_UPLOAD_URL || '/api/chunk-upload',
+        cancelUrl: import.meta.env.VITE_CANCEL_URL || '/api/cancel',
+        deleteUrl: import.meta.env.VITE_DELETE_URL || '/api/delete',
         multiple: mode === 'multiple',
         dragDrop: $('#dragDrop').is(':checked'),
         browseButton: $('#browseButton').is(':checked'),

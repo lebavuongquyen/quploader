@@ -15,22 +15,22 @@ export class ThemeHandler {
     const { darkMode } = this.ctx.options;
 
     if (darkMode === true) {
-      this.ctx.$container.addClass('quploader-dark');
+      this.ctx.container.classList.add('quploader-dark');
     } else if (darkMode === 'auto') {
       if (typeof window !== 'undefined' && window.matchMedia) {
         this.mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
         
         // Initial check
         if (this.mediaQueryList.matches) {
-          this.ctx.$container.addClass('quploader-dark');
+          this.ctx.container.classList.add('quploader-dark');
         }
 
         // Listen for changes
         this.mediaQueryListener = (e: MediaQueryListEvent) => {
           if (e.matches) {
-            this.ctx.$container.addClass('quploader-dark');
+            this.ctx.container.classList.add('quploader-dark');
           } else {
-            this.ctx.$container.removeClass('quploader-dark');
+            this.ctx.container.classList.remove('quploader-dark');
           }
         };
 
@@ -44,7 +44,7 @@ export class ThemeHandler {
       }
     } else {
        // Explicitly false
-       this.ctx.$container.removeClass('quploader-dark');
+       this.ctx.container.classList.remove('quploader-dark');
     }
   }
 

@@ -3,21 +3,15 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
-    lib: {
-      entry: resolve(__dirname, 'src/quploader.ts'),
-      name: 'QUploader',
-      fileName: () => 'quploader.min.js',
-      formats: ['iife']
-    },
+    outDir: 'dist',
     rollupOptions: {
-      external: ['jquery'],
-      output: {
-        globals: {
-          jquery: '$'
-        }
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        callbacks: resolve(__dirname, 'callbacks.html'),
+        headless: resolve(__dirname, 'headless.html'),
+        docs: resolve(__dirname, 'docs.html')
       }
-    },
-    cssCodeSplit: false
+    }
   },
   server: {
     port: 5173,

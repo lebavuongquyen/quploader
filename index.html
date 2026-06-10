@@ -82,20 +82,7 @@
 
   <div class="app-container">
     <div id="sidebar">
-      <!-- QR Code Section for Mobile Testing -->
-      <div class="section" id="qr-section" style="text-align: center; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <h3 style="margin-bottom: 12px; font-size: 15px; border-bottom: 2px solid #28a745; padding-bottom: 8px;">Scan to Test on Mobile</h3>
-        <div id="qrcode-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 8px; min-height: 150px;">
-          <span style="font-size: 12px; color: #999;">Generating QR Code...</span>
-        </div>
-        <div style="font-size: 11px; word-break: break-all; color: #555; text-align: left; padding: 4px 0;">
-          <strong style="display: block; margin-bottom: 2px;">Target URL:</strong>
-          <a id="qr-link" href="#" target="_blank" style="color: #007bff; text-decoration: underline; font-family: monospace;">-</a>
-        </div>
-        <div style="font-size: 10px; color: #888; margin-top: 6px; border-top: 1px dashed #eee; padding-top: 6px; text-align: left;">
-          💡 Update <code>VITE_NGROK_URL</code> in your <code>.env</code> file to change this test URL.
-        </div>
-      </div>
+
 
       <form id="configForm">
         <div class="section">
@@ -209,6 +196,10 @@
 
   <script type="module">
     import $ from 'jquery';
+    window.$ = window.jQuery = $;
+  </script>
+  <script type="module">
+    import $ from 'jquery';
     import '/src/quploader.ts';
 
     function initUploader() {
@@ -218,10 +209,10 @@
       const mode = $('input[name="selectionMode"]:checked').val();
 
       const config = {
-        uploadUrl: '/api/upload',
-        chunkUploadUrl: '/api/chunk-upload',
-        cancelUrl: '/api/cancel',
-        deleteUrl: '/api/delete',
+        uploadUrl: import.meta.env.VITE_UPLOAD_URL || '/api/upload',
+        chunkUploadUrl: import.meta.env.VITE_CHUNK_UPLOAD_URL || '/api/chunk-upload',
+        cancelUrl: import.meta.env.VITE_CANCEL_URL || '/api/cancel',
+        deleteUrl: import.meta.env.VITE_DELETE_URL || '/api/delete',
         multiple: mode === 'multiple',
         dragDrop: $('#dragDrop').is(':checked'),
         browseButton: $('#browseButton').is(':checked'),
@@ -257,17 +248,7 @@
     }
 
     $(document).ready(function() {
-      // Generate QR Code for testing on mobile devices
-      const envNgrokUrl = import.meta.env.VITE_NGROK_URL;
-      const testUrl = envNgrokUrl && envNgrokUrl.trim() !== '' ? envNgrokUrl.trim() : window.location.href;
-      const qrContainer = document.getElementById('qrcode-container');
-      const qrLink = document.getElementById('qr-link');
-      if (qrContainer && qrLink) {
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(testUrl)}`;
-        qrContainer.innerHTML = `<img src="${qrApiUrl}" alt="QR Code" style="border: 1px solid #eee; display: block; max-width: 150px;" />`;
-        qrLink.href = testUrl;
-        qrLink.textContent = testUrl;
-      }
+
 
       initUploader();
       $('#apply').on('click', function() {

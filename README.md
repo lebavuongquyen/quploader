@@ -207,14 +207,7 @@ The repository includes a multi-page sandbox architecture to test all features e
    ```
 3. Open the output localhost link in your browser.
 
-### Mobile & Remote Testing with Ngrok
-To test features like Camera WebRTC and remote uploads directly on a mobile device, a secure HTTPS tunnel is needed.
-1. Run your tunnel (e.g. `ngrok http 5173`).
-2. Update the Ngrok tunnel address in the `.env` file at the root level of your project:
-   ```env
-   VITE_NGROK_URL=https://<your-ngrok-subdomain>.ngrok-free.app
-   ```
-3. Once configured, the main sandbox page (`index.html`) will automatically render a **QR Code** pointing to this public HTTPS URL. Scan the QR code on your mobile device to test.
+
 
 ### Available Sandbox Pages
 * **Basic Uploader** (`index.html`): Tests core configurations, dark-mode switches, limits, and standard progress bar grids.

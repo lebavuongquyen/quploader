@@ -1,5 +1,4 @@
 import quploaderCss from './quploader.css?inline';
-import $ from 'jquery';
 import { IconProvider } from './icon-provider';
 import { MimeHelper } from './mime-helper';
 import * as Types from './types';
@@ -17,19 +16,12 @@ if (typeof document !== 'undefined' && !document.getElementById('quploader-inlin
   document.head.appendChild(style);
 }
 
-declare global {
-  interface JQuery {
-    quploader(options?: Partial<QUploader.Options>): JQuery;
-    quploader(methodName: string, ...args: any[]): any;
-  }
-}
-
 class QUploader implements Types.QUploader.CoreContext {
-  private $element: JQuery;
-  public $container!: JQuery;
-  private $hiddenInput!: JQuery;
-  public $reviewArea!: JQuery;
-  private $globalErrorBox!: JQuery;
+  public element: HTMLElement;
+  public container!: HTMLElement;
+  private hiddenInput!: HTMLInputElement;
+  public reviewArea: HTMLElement | null = null;
+  private globalErrorBox!: HTMLElement;
   public options: QUploader.Options;
   public files: QUploader.File[] = [];
   private errorTimeout: any;
@@ -44,10 +36,10 @@ class QUploader implements Types.QUploader.CoreContext {
   public themeHandler: ThemeHandler;
 
   constructor(element: HTMLElement, options?: Partial<QUploader.Options>) {
-    this.$element = $(element);
+    this.element = element;
     
     // Default options
-    this.options = $.extend({
+    this.options = Object.assign({
       uploadUrl: '',
       showIntroText: true,
       cameraButton: false,
@@ -83,8 +75,8 @@ class QUploader implements Types.QUploader.CoreContext {
       resolvedFileTypes = this.parseAcceptString(options.accept);
     } else if (options && options.fileTypes !== undefined) {
       resolvedFileTypes = options.fileTypes;
-    } else if (this.$element.is('input[type="file"]')) {
-      const acceptAttr = this.$element.attr('accept');
+    } else if (this.element.tagName.toLowerCase() === 'input' && (this.element as HTMLInputElement).type === 'file') {
+      const acceptAttr = this.element.getAttribute('accept');
       if (acceptAttr) {
         resolvedFileTypes = this.parseAcceptString(acceptAttr);
       }
@@ -140,56 +132,63 @@ class QUploader implements Types.QUploader.CoreContext {
 
   private buildDOM(): void {
     if (this.options.headless) {
-      this.$container = this.$element;
-      if (this.$element.is('input[type="file"]')) {
-        this.$hiddenInput = this.$element;
-        this.$hiddenInput.hide();
+      this.container = this.element;
+      if (this.element.tagName.toLowerCase() === 'input' && (this.element as HTMLInputElement).type === 'file') {
+        this.hiddenInput = this.element as HTMLInputElement;
+        this.hiddenInput.style.display = 'none';
       } else {
-        this.$hiddenInput = $('<input type="file" style="display: none;" />');
-        $('body').append(this.$hiddenInput);
+        this.hiddenInput = document.createElement('input');
+        this.hiddenInput.type = 'file';
+        this.hiddenInput.style.display = 'none';
+        document.body.appendChild(this.hiddenInput);
       }
 
       if (this.options.multiple) {
-        this.$hiddenInput.attr('multiple', 'multiple');
+        this.hiddenInput.setAttribute('multiple', 'multiple');
       }
       if (this.options.fileTypes && this.options.fileTypes.length > 0) {
-        this.$hiddenInput.attr('accept', this.options.fileTypes.join(','));
+        this.hiddenInput.setAttribute('accept', this.options.fileTypes.join(','));
       }
       
-      this.$reviewArea = $();
-      this.$globalErrorBox = $();
+      this.reviewArea = null;
+      this.globalErrorBox = document.createElement('div');
       return;
     }
 
     // 1. Container Logic
-    if (this.$element.is('input[type="file"]')) {
-      this.$container = $('<div class="quploader-container"></div>');
+    const isFileInput = this.element.tagName.toLowerCase() === 'input' && (this.element as HTMLInputElement).type === 'file';
+    if (isFileInput) {
+      this.container = document.createElement('div');
+      this.container.className = 'quploader-container';
       if (this.options.containerClass) {
-         this.$container.addClass(this.options.containerClass);
+         this.container.classList.add(this.options.containerClass);
       }
-      this.$element.wrap(this.$container);
-      this.$container = this.$element.parent();
-      this.$hiddenInput = this.$element;
-      this.$hiddenInput.hide();
+      this.element.parentNode?.insertBefore(this.container, this.element);
+      this.container.appendChild(this.element);
+      this.hiddenInput = this.element as HTMLInputElement;
+      this.hiddenInput.style.display = 'none';
     } else {
-      this.$container = this.$element;
-      this.$container.addClass('quploader-container');
+      this.container = this.element;
+      this.container.classList.add('quploader-container');
       if (this.options.containerClass) {
-        this.$container.addClass(this.options.containerClass);
+        this.container.classList.add(this.options.containerClass);
       }
-      this.$hiddenInput = $('<input type="file" style="display: none;" />');
-      this.$container.append(this.$hiddenInput);
+      this.hiddenInput = document.createElement('input');
+      this.hiddenInput.type = 'file';
+      this.hiddenInput.style.display = 'none';
+      this.container.appendChild(this.hiddenInput);
     }
 
     if (this.options.multiple) {
-      this.$hiddenInput.attr('multiple', 'multiple');
+      this.hiddenInput.setAttribute('multiple', 'multiple');
     }
     if (this.options.fileTypes && this.options.fileTypes.length > 0) {
-      this.$hiddenInput.attr('accept', this.options.fileTypes.join(','));
+      this.hiddenInput.setAttribute('accept', this.options.fileTypes.join(','));
     }
 
     // 2. Default Content Elements
-    const $topContent = $('<div class="quploader-top-content"></div>');
+    const topContent = document.createElement('div');
+    topContent.className = 'quploader-top-content';
     
     if (this.options.showIntroText) {
       let text = '';
@@ -199,85 +198,110 @@ class QUploader implements Types.QUploader.CoreContext {
         text = this.options.browseButton ? '' : 'Click to browse';
       }
       if (text) {
-        $topContent.append(`<div class="quploader-intro">${text}</div>`);
+        const intro = document.createElement('div');
+        intro.className = 'quploader-intro';
+        intro.textContent = text;
+        topContent.appendChild(intro);
       }
     }
 
-    const $buttonsGroup = $('<div class="quploader-buttons-group"></div>');
+    const buttonsGroup = document.createElement('div');
+    buttonsGroup.className = 'quploader-buttons-group';
     const useIcon = this.options.useIcon;
 
     if (this.options.browseButton) {
       const label = useIcon ? IconProvider.getBrowseIcon() : 'Browse File';
-      const $browseBtn = $(`<button type="button" class="quploader-btn-browse" title="Browse File">${label}</button>`);
-      if (useIcon) $browseBtn.addClass('quploader-btn-icon-mode');
-      $buttonsGroup.append($browseBtn);
+      const browseBtn = document.createElement('button');
+      browseBtn.type = 'button';
+      browseBtn.className = 'quploader-btn-browse';
+      browseBtn.title = 'Browse File';
+      if (useIcon) browseBtn.classList.add('quploader-btn-icon-mode');
+      browseBtn.innerHTML = label;
+      buttonsGroup.appendChild(browseBtn);
     }
 
     if (this.options.allowFolder) {
       const label = useIcon ? IconProvider.getFolderIcon() : 'Browse Folder';
-      const $folderBtn = $(`<button type="button" class="quploader-btn-folder" title="Browse Folder">${label}</button>`);
-      if (useIcon) $folderBtn.addClass('quploader-btn-icon-mode');
-      $buttonsGroup.append($folderBtn);
+      const folderBtn = document.createElement('button');
+      folderBtn.type = 'button';
+      folderBtn.className = 'quploader-btn-folder';
+      folderBtn.title = 'Browse Folder';
+      if (useIcon) folderBtn.classList.add('quploader-btn-icon-mode');
+      folderBtn.innerHTML = label;
+      buttonsGroup.appendChild(folderBtn);
     }
 
     if (this.options.cameraButton) {
       const label = useIcon ? IconProvider.getCameraIcon() : 'Camera';
-      const $cameraBtn = $(`<button type="button" class="quploader-btn-camera" title="Camera">${label}</button>`);
-      if (useIcon) $cameraBtn.addClass('quploader-btn-icon-mode');
-      $buttonsGroup.append($cameraBtn);
+      const cameraBtn = document.createElement('button');
+      cameraBtn.type = 'button';
+      cameraBtn.className = 'quploader-btn-camera';
+      cameraBtn.title = 'Camera';
+      if (useIcon) cameraBtn.classList.add('quploader-btn-icon-mode');
+      cameraBtn.innerHTML = label;
+      buttonsGroup.appendChild(cameraBtn);
     }
 
     if (!this.options.autoUpload && this.options.uploadUrl) {
       const label = useIcon ? IconProvider.getUploadIcon() : 'Upload All';
-      const $uploadBtn = $(`<button type="button" class="quploader-btn-upload" disabled style="display: none;" title="Upload All">${label}</button>`);
-      if (useIcon) $uploadBtn.addClass('quploader-btn-icon-mode');
-      $buttonsGroup.append($uploadBtn);
+      const uploadBtn = document.createElement('button');
+      uploadBtn.type = 'button';
+      uploadBtn.className = 'quploader-btn-upload';
+      uploadBtn.disabled = true;
+      uploadBtn.style.display = 'none';
+      uploadBtn.title = 'Upload All';
+      if (useIcon) uploadBtn.classList.add('quploader-btn-icon-mode');
+      uploadBtn.innerHTML = label;
+      buttonsGroup.appendChild(uploadBtn);
     }
 
-    if ($buttonsGroup.children().length > 0) {
-      $topContent.append($buttonsGroup);
+    if (buttonsGroup.children.length > 0) {
+      topContent.appendChild(buttonsGroup);
     }
     
     // Add top content to container if it has children
-    if ($topContent.children().length > 0) {
-      this.$container.prepend($topContent);
+    if (topContent.children.length > 0) {
+      this.container.insertBefore(topContent, this.container.firstChild);
     }
 
     if (this.options.reviewMode === 'single') {
-      this.$container.addClass('quploader-mode-single');
+      this.container.classList.add('quploader-mode-single');
     }
 
     // 3. Review Area
     if (this.options.reviewPosition !== 'none') {
-      this.$reviewArea = $('<div class="quploader-review-area"></div>');
+      this.reviewArea = document.createElement('div');
+      this.reviewArea.className = 'quploader-review-area';
       if (this.options.reviewMode === 'detail') {
-        this.$reviewArea.addClass('quploader-detail');
+        this.reviewArea.classList.add('quploader-detail');
       }
       if (this.options.clickReviewAreaToBrowse) {
-        this.$reviewArea.addClass('quploader-review-clickable');
+        this.reviewArea.classList.add('quploader-review-clickable');
       }
       if (this.options.reviewPosition === 'above') {
-        this.$container.prepend(this.$reviewArea);
+        this.container.insertBefore(this.reviewArea, this.container.firstChild);
       } else {
-        this.$container.append(this.$reviewArea);
+        this.container.appendChild(this.reviewArea);
       }
     }
 
-    this.$globalErrorBox = $('<div class="quploader-global-error" style="display: none;"></div>');
-    this.$container.append(this.$globalErrorBox);
+    this.globalErrorBox = document.createElement('div');
+    this.globalErrorBox.className = 'quploader-global-error';
+    this.globalErrorBox.style.display = 'none';
+    this.container.appendChild(this.globalErrorBox);
 
-    this.$container.attr('tabindex', '0');
+    this.container.setAttribute('tabindex', '0');
   }
 
   private bindEvents(): void {
-    // Prevent default drag behaviors globally, namespace to avoid multiple bindings
-    $(document).off('dragover.quploader drop.quploader').on('dragover.quploader drop.quploader', (e) => {
-      e.preventDefault();
-    });
+    // Prevent default drag behaviors globally
+    const preventDefault = (e: Event) => e.preventDefault();
+    document.addEventListener('dragover', preventDefault);
+    document.addEventListener('drop', preventDefault);
 
     if (this.options.headless) {
-      this.$container.on('click', (e) => {
-        if ($(e.target).is(this.$hiddenInput)) {
+      this.container.addEventListener('click', (e) => {
+        if (e.target === this.hiddenInput) {
           return;
         }
         e.stopPropagation();
@@ -292,20 +316,20 @@ class QUploader implements Types.QUploader.CoreContext {
       });
 
       if (this.options.mode === 'dropzone' || this.options.dragDrop) {
-        this.$container.on('dragover', (e) => {
+        this.container.addEventListener('dragover', (e) => {
           e.preventDefault();
-          this.$container.addClass('quploader-dragover');
+          this.container.classList.add('quploader-dragover');
         });
 
-        this.$container.on('dragleave', (e) => {
+        this.container.addEventListener('dragleave', (e) => {
           e.preventDefault();
-          this.$container.removeClass('quploader-dragover');
+          this.container.classList.remove('quploader-dragover');
         });
 
-        this.$container.on('drop', async (e) => {
+        this.container.addEventListener('drop', async (e: DragEvent) => {
           e.preventDefault();
-          this.$container.removeClass('quploader-dragover');
-          const dt = (e.originalEvent as DragEvent).dataTransfer;
+          this.container.classList.remove('quploader-dragover');
+          const dt = e.dataTransfer;
           if (!dt) return;
 
           if (this.options.allowFolder && dt.items) {
@@ -316,7 +340,7 @@ class QUploader implements Types.QUploader.CoreContext {
             for (let i = 0; i < dt.items.length; i++) {
               const item = dt.items[i];
               if (item.kind === 'file') {
-                const entry = item.webkitGetAsEntry();
+                const entry = (item as any).webkitGetAsEntry ? (item as any).webkitGetAsEntry() : null;
                 if (entry) {
                   if (entry.isDirectory) hasFolder = true;
                   promises.push(this.readDropEntry(entry, files, ''));
@@ -336,37 +360,37 @@ class QUploader implements Types.QUploader.CoreContext {
         });
       }
 
-      this.$hiddenInput.on('change', (e) => {
+      this.hiddenInput.addEventListener('change', (e) => {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
           this.handleFiles(Array.from(input.files));
-        } else if (this.$hiddenInput.attr('webkitdirectory')) {
+        } else if (this.hiddenInput.hasAttribute('webkitdirectory')) {
           alert('Thư mục này trống.');
         }
         input.value = ''; 
         if (this.options.mode !== 'browseFolder' && !this.options.allowFolder) {
-          this.$hiddenInput.removeAttr('webkitdirectory');
+          this.hiddenInput.removeAttribute('webkitdirectory');
         }
       });
 
       return;
     }
 
-    this.$container.on('paste', (e) => {
-      const originalEvent = e.originalEvent as ClipboardEvent;
-      if (originalEvent && originalEvent.clipboardData && originalEvent.clipboardData.files.length > 0) {
-        this.handleFiles(Array.from(originalEvent.clipboardData.files));
+    this.container.addEventListener('paste', (e: ClipboardEvent) => {
+      if (e.clipboardData && e.clipboardData.files.length > 0) {
+        this.handleFiles(Array.from(e.clipboardData.files));
       }
     });
 
-    this.$container.on('click', (e) => {
+    this.container.addEventListener('click', (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
       // Prevent if clicked on a button, or the hidden input itself
-      if ($(e.target).closest('button, input[type="file"]').length > 0) {
+      if (target.closest('button, input[type="file"]')) {
         return;
       }
       
       // If clicked inside the review area, check the option
-      if ($(e.target).closest('.quploader-review-area').length > 0) {
+      if (target.closest('.quploader-review-area')) {
         if (!this.options.clickReviewAreaToBrowse) {
           return;
         }
@@ -375,66 +399,92 @@ class QUploader implements Types.QUploader.CoreContext {
       this.openFilePicker();
     });
 
-    this.$container.on('click', '.quploader-btn-browse', (e) => {
-      e.stopPropagation();
-      this.openFilePicker();
-    });
+    // Delegated click events for top-content buttons and delete button
+    this.container.addEventListener('click', (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      const browseBtn = target.closest('.quploader-btn-browse');
+      if (browseBtn) {
+        e.stopPropagation();
+        this.openFilePicker();
+        return;
+      }
 
-    this.$container.on('click', '.quploader-btn-folder', (e) => {
-      e.stopPropagation();
-      this.openFolderPicker();
-    });
+      const folderBtn = target.closest('.quploader-btn-folder');
+      if (folderBtn) {
+        e.stopPropagation();
+        this.openFolderPicker();
+        return;
+      }
 
-    // Camera Button
-    this.$container.on('click', '.quploader-btn-camera', (e) => {
-      e.stopPropagation();
-      this.cameraHandler.openCamera();
-    });
+      const cameraBtn = target.closest('.quploader-btn-camera');
+      if (cameraBtn) {
+        e.stopPropagation();
+        this.cameraHandler.openCamera();
+        return;
+      }
 
-    this.$container.on('click', '.quploader-btn-upload', (e) => {
-      e.stopPropagation();
-      this.files.forEach(f => {
-        if (f.status === 'error') {
-          f.status = 'pending';
-          f.progress = 0;
-          this.updateFileProgress(f.id!, 0);
+      const uploadBtn = target.closest('.quploader-btn-upload') as HTMLButtonElement;
+      if (uploadBtn) {
+        e.stopPropagation();
+        this.files.forEach(f => {
+          if (f.status === 'error') {
+            f.status = 'pending';
+            f.progress = 0;
+            this.updateFileProgress(f.id!, 0);
+          }
+        });
+        this.processUploadQueue();
+        return;
+      }
+
+      // Delete Button in Review Area (delegated)
+      const deleteBtn = target.closest('.quploader-btn-delete');
+      if (deleteBtn) {
+        e.stopPropagation();
+        const item = deleteBtn.closest('.quploader-review-item') as HTMLElement;
+        if (item) {
+          const id = item.getAttribute('data-id');
+          if (id) {
+            this.removeFile(id);
+          }
         }
-      });
-      this.processUploadQueue();
+        return;
+      }
     });
 
     // File selection
-    this.$hiddenInput.on('change', (e) => {
+    this.hiddenInput.addEventListener('change', (e) => {
       const input = e.target as HTMLInputElement;
       if (input.files && input.files.length > 0) {
         this.handleFiles(Array.from(input.files));
-      } else if (this.$hiddenInput.attr('webkitdirectory')) {
+      } else if (this.hiddenInput.hasAttribute('webkitdirectory')) {
         alert('Thư mục này trống.');
       }
       // Reset input so selecting the same file again triggers change
       input.value = ''; 
       // Reset webkitdirectory if not in folder picker mode
       if (this.options.mode !== 'browseFolder' && !this.options.allowFolder) {
-        this.$hiddenInput.removeAttr('webkitdirectory');
+        this.hiddenInput.removeAttribute('webkitdirectory');
       }
     });
 
     // Drag & Drop
     if (this.options.dragDrop) {
-      this.$container.on('dragover', (e) => {
+      this.container.addEventListener('dragover', (e) => {
         e.preventDefault();
-        this.$container.addClass('quploader-dragover');
+        this.container.classList.add('quploader-dragover');
       });
 
-      this.$container.on('dragleave', (e) => {
+      this.container.addEventListener('dragleave', (e) => {
         e.preventDefault();
-        this.$container.removeClass('quploader-dragover');
+        this.container.classList.remove('quploader-dragover');
       });
 
-      this.$container.on('drop', async (e) => {
+      this.container.addEventListener('drop', async (e: DragEvent) => {
         e.preventDefault();
-        this.$container.removeClass('quploader-dragover');
-        const dt = (e.originalEvent as DragEvent).dataTransfer;
+        this.container.classList.remove('quploader-dragover');
+        const dt = e.dataTransfer;
         if (!dt) return;
 
         if (this.options.allowFolder && dt.items) {
@@ -445,7 +495,7 @@ class QUploader implements Types.QUploader.CoreContext {
           for (let i = 0; i < dt.items.length; i++) {
             const item = dt.items[i];
             if (item.kind === 'file') {
-              const entry = item.webkitGetAsEntry();
+              const entry = (item as any).webkitGetAsEntry ? (item as any).webkitGetAsEntry() : null;
               if (entry) {
                 if (entry.isDirectory) hasFolder = true;
                 promises.push(this.readDropEntry(entry, files, ''));
@@ -464,28 +514,20 @@ class QUploader implements Types.QUploader.CoreContext {
         }
       });
     }
-    
-    // Delete Button in Review Area
-    this.$container.on('click', '.quploader-btn-delete', (e) => {
-      e.stopPropagation();
-      const $item = $(e.target).closest('.quploader-review-item');
-      const id = $item.data('id');
-      this.removeFile(id);
-    });
   }
 
   private async openFilePicker(): Promise<void> {
     if (this.options.preferFileInput !== false) {
-      this.$hiddenInput.removeAttr('webkitdirectory');
-      this.$hiddenInput.trigger('click');
+      this.hiddenInput.removeAttribute('webkitdirectory');
+      this.hiddenInput.click();
       return;
     }
 
     const isSupported = 'showOpenFilePicker' in window;
 
     if (!isSupported) {
-      this.$hiddenInput.removeAttr('webkitdirectory');
-      this.$hiddenInput.trigger('click');
+      this.hiddenInput.removeAttribute('webkitdirectory');
+      this.hiddenInput.click();
       return;
     }
 
@@ -511,8 +553,8 @@ class QUploader implements Types.QUploader.CoreContext {
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('File System API Error:', err);
-        this.$hiddenInput.removeAttr('webkitdirectory');
-        this.$hiddenInput.trigger('click');
+        this.hiddenInput.removeAttribute('webkitdirectory');
+        this.hiddenInput.click();
       }
     }
   }
@@ -534,13 +576,13 @@ class QUploader implements Types.QUploader.CoreContext {
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           console.error('Directory Picker Error:', err);
-          this.$hiddenInput.attr('webkitdirectory', 'true');
-          this.$hiddenInput.trigger('click');
+          this.hiddenInput.setAttribute('webkitdirectory', 'true');
+          this.hiddenInput.click();
         }
       }
     } else {
-      this.$hiddenInput.attr('webkitdirectory', 'true');
-      this.$hiddenInput.trigger('click');
+      this.hiddenInput.setAttribute('webkitdirectory', 'true');
+      this.hiddenInput.click();
     }
   }
 
@@ -711,30 +753,35 @@ class QUploader implements Types.QUploader.CoreContext {
 
   public showGlobalError(htmlContent: string): void {
     if (this.options.headless) return;
-    this.$globalErrorBox.html(htmlContent).fadeIn(200);
+    this.globalErrorBox.innerHTML = htmlContent;
+    this.globalErrorBox.style.display = 'block';
+    
     if (this.errorTimeout) clearTimeout(this.errorTimeout);
     
     if (this.options.errorDelay && this.options.errorDelay > 0) {
       this.errorTimeout = setTimeout(() => {
-        this.$globalErrorBox.fadeOut(300, () => this.$globalErrorBox.empty());
+        this.globalErrorBox.style.display = 'none';
+        this.globalErrorBox.innerHTML = '';
       }, this.options.errorDelay);
     }
   }
 
   public updateUploadButtonState(): void {
     if (this.options.headless) return;
+    const uploadBtn = this.container.querySelector('.quploader-btn-upload') as HTMLButtonElement;
+    if (!uploadBtn) return;
+
     if (this.options.autoUpload || !this.options.uploadUrl) {
-      this.$container.find('.quploader-btn-upload').hide();
+      uploadBtn.style.display = 'none';
       return;
     }
     const hasPending = this.files.some(f => f.status === 'pending' || f.status === 'error');
-    const $btn = this.$container.find('.quploader-btn-upload');
-    $btn.prop('disabled', !hasPending);
+    uploadBtn.disabled = !hasPending;
     
     if (this.files.length > 0) {
-      $btn.show();
+      uploadBtn.style.display = 'inline-block';
     } else {
-      $btn.hide();
+      uploadBtn.style.display = 'none';
     }
   }
 
@@ -803,46 +850,51 @@ class QUploader implements Types.QUploader.CoreContext {
   }
 }
 
-// Register jQuery Plugin
-$.fn.quploader = function(options?: any, ...args: any[]) {
-  if (typeof options === 'string') {
-    let returnValue: any = this;
-    const headlessModes = ['browseFile', 'browseFolder', 'camera', 'dropzone'];
-    this.each(function() {
-      let instance = $.data(this, 'plugin_quploader');
-      
-      // If not initialized and is a headless mode method, initialize it
-      if (!instance && headlessModes.includes(options)) {
-        const config = $.extend({}, typeof args[0] === 'object' ? args[0] : {}, {
-          headless: true,
-          mode: options
-        });
-        instance = new QUploader(this, config);
-        $.data(this, 'plugin_quploader', instance);
-      }
-      
-      if (instance && typeof (instance as any)[options] === 'function') {
-        const hasConfig = args.length > 0 && typeof args[0] === 'object';
-        if (!hasConfig || (instance as any)._initializedBefore) {
-          const methodArgs = hasConfig ? args.slice(1) : args;
-          const res = (instance as any)[options].apply(instance, methodArgs);
-          if (returnValue === this) {
-            returnValue = res;
+// Register jQuery Plugin for backwards-compatibility
+if (typeof window !== 'undefined') {
+  const jQuery = (window as any).jQuery || (window as any).$;
+  if (jQuery) {
+    jQuery.fn.quploader = function(this: any, options?: any, ...args: any[]) {
+      const self = this;
+      if (typeof options === 'string') {
+        let returnValue: any = self;
+        const headlessModes = ['browseFile', 'browseFolder', 'camera', 'dropzone'];
+        this.each(function(this: HTMLElement) {
+          let instance = jQuery.data(this, 'plugin_quploader');
+          
+          if (!instance && headlessModes.includes(options)) {
+            const config = Object.assign({}, typeof args[0] === 'object' ? args[0] : {}, {
+              headless: true,
+              mode: options
+            });
+            instance = new QUploader(this, config);
+            jQuery.data(this, 'plugin_quploader', instance);
           }
-        }
-        (instance as any)._initializedBefore = true;
+          
+          if (instance && typeof (instance as any)[options] === 'function') {
+            const hasConfig = args.length > 0 && typeof args[0] === 'object';
+            if (!hasConfig || (instance as any)._initializedBefore) {
+              const methodArgs = hasConfig ? args.slice(1) : args;
+              const res = (instance as any)[options].apply(instance, methodArgs);
+              if (returnValue === self) {
+                returnValue = res;
+              }
+            }
+            (instance as any)._initializedBefore = true;
+          }
+        });
+        return returnValue;
       }
-    });
-    return returnValue;
+      return this.each(function(this: HTMLElement) {
+        if (!jQuery.data(this, 'plugin_quploader')) {
+          const uploader = new QUploader(this, options);
+          (uploader as any)._initializedBefore = true;
+          jQuery.data(this, 'plugin_quploader', uploader);
+        }
+      });
+    };
   }
-  return this.each(function() {
-    if (!$.data(this, 'plugin_quploader')) {
-      const uploader = new QUploader(this, options);
-      (uploader as any)._initializedBefore = true;
-      $.data(this, 'plugin_quploader', uploader);
-    }
-  });
-};
+}
 
 namespace QUploader {
   export type ResizeOptions = Types.QUploader.ResizeOptions;

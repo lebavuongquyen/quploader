@@ -1,5 +1,4 @@
 import { QUploader } from '../types';
-import $ from 'jquery';
 import { MimeHelper } from '../mime-helper';
 
 export class ReviewHandler {
@@ -35,18 +34,18 @@ export class ReviewHandler {
     if (this.ctx.options.headless) return;
     if (this.ctx.options.reviewMode === 'single' && file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file);
-      this.ctx.$container.css({
-        'background-image': `url("${url}")`,
-        'background-size': this.ctx.options.singleModeFit || 'cover'
-      });
+      this.ctx.container.style.backgroundImage = `url("${url}")`;
+      this.ctx.container.style.backgroundSize = this.ctx.options.singleModeFit || 'cover';
     }
 
-    if (!this.ctx.$reviewArea) return;
+    if (!this.ctx.reviewArea) return;
     
-    const $item = $(`<div class="quploader-review-item" data-id="${file.id}"></div>`);
+    const item = document.createElement('div');
+    item.className = 'quploader-review-item';
+    item.setAttribute('data-id', file.id || '');
     
     if (this.ctx.options.reviewMode === 'detail') {
-      $item.addClass('quploader-detail-item');
+      item.classList.add('quploader-detail-item');
       
       let iconHtml = '';
       if (file.type.startsWith('image/')) {
@@ -59,7 +58,7 @@ export class ReviewHandler {
       const formattedSize = this.formatSize(file.size);
       const formattedDate = file.lastModified ? this.formatDate(file.lastModified) : 'Unknown Date';
 
-      $item.append(`
+      item.innerHTML = `
         <div class="quploader-detail-icon">${iconHtml}</div>
         <div class="quploader-detail-info">
           <div class="quploader-detail-name" title="${file.name}">${file.name}</div>
@@ -69,65 +68,64 @@ export class ReviewHandler {
             <span class="quploader-detail-date">${formattedDate}</span>
           </div>
         </div>
-      `);
-
-      if (this.ctx.options.progressBar) {
-        $item.append(`
+        ${this.ctx.options.progressBar ? `
           <div class="quploader-progress">
              <div class="quploader-progress-bar" style="width: 0%"></div>
           </div>
-        `);
-      }
-
-      if (this.ctx.options.allowDelete !== false) {
-        $item.append(`<button type="button" class="quploader-btn-delete">×</button>`);
-      }
+        ` : ''}
+        ${this.ctx.options.allowDelete !== false ? `<button type="button" class="quploader-btn-delete">×</button>` : ''}
+      `;
     } else {
       // Preview for images
+      let contentHtml = '';
       if (file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
         if (this.ctx.options.reviewMode !== 'single') {
-          $item.append(`<img src="${url}" class="quploader-thumb" />`);
+          contentHtml += `<img src="${url}" class="quploader-thumb" />`;
         }
       } else {
         if (this.ctx.options.reviewMode !== 'single') {
-          $item.append(`<div class="quploader-file-icon">${this.getFileIcon(file)}</div>`);
+          contentHtml += `<div class="quploader-file-icon">${this.getFileIcon(file)}</div>`;
         }
       }
 
       if (this.ctx.options.showFileName !== false) {
         if (this.ctx.options.reviewMode !== 'single') {
-          $item.append(`<div class="quploader-file-name" title="${file.name}">${file.name}</div>`);
+          contentHtml += `<div class="quploader-file-name" title="${file.name}">${file.name}</div>`;
         }
       }
 
       if (this.ctx.options.progressBar) {
-         $item.append(`
+         contentHtml += `
            <div class="quploader-progress">
               <div class="quploader-progress-bar" style="width: 0%"></div>
            </div>
-         `);
+         `;
       }
       
       if (this.ctx.options.allowDelete !== false) {
-        $item.append(`<button type="button" class="quploader-btn-delete">×</button>`);
+        contentHtml += `<button type="button" class="quploader-btn-delete">×</button>`;
       }
+      item.innerHTML = contentHtml;
     }
 
     if (!this.ctx.options.multiple) {
-      this.ctx.$reviewArea.empty();
+      this.ctx.reviewArea.innerHTML = '';
     }
-    this.ctx.$reviewArea.append($item);
+    this.ctx.reviewArea.appendChild(item);
   }
 
   public updateFileProgress(fileId: string, percent: number): void {
     if (this.ctx.options.headless) return;
-    if (!this.ctx.$reviewArea) return;
-    const $item = this.ctx.$reviewArea.find(`.quploader-review-item[data-id="${fileId}"]`);
-    if ($item.length) {
-      $item.find('.quploader-progress-bar').css('width', `${percent}%`);
+    if (!this.ctx.reviewArea) return;
+    const item = this.ctx.reviewArea.querySelector(`.quploader-review-item[data-id="${fileId}"]`) as HTMLElement;
+    if (item) {
+      const progressBar = item.querySelector('.quploader-progress-bar') as HTMLElement;
+      if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+      }
       if (percent === 100) {
-        $item.addClass('quploader-success');
+        item.classList.add('quploader-success');
       }
     }
   }

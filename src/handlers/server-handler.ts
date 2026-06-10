@@ -310,13 +310,13 @@ export class ServerHandler {
   public handleUploadError(file: QUploader.File, errorMsg: string): void {
     file.status = 'error';
     let domUpdated = false;
-    if (this.ctx.$reviewArea) {
-      const $item = this.ctx.$reviewArea.find(`.quploader-review-item[data-id="${file.id}"]`);
-      if ($item.length) {
+    if (this.ctx.reviewArea) {
+      const item = this.ctx.reviewArea.querySelector(`.quploader-review-item[data-id="${file.id}"]`) as HTMLElement;
+      if (item) {
         domUpdated = true;
-        $item.addClass('quploader-error');
-        if ($item.find('.quploader-error-msg').length === 0) {
-          $item.append(`<div class="quploader-error-msg" title="${errorMsg}">${errorMsg}</div>`);
+        item.classList.add('quploader-error');
+        if (!item.querySelector('.quploader-error-msg')) {
+          item.insertAdjacentHTML('beforeend', `<div class="quploader-error-msg" title="${errorMsg}">${errorMsg}</div>`);
         }
       }
     }
@@ -382,12 +382,13 @@ export class ServerHandler {
       this.ctx.files.splice(removeIdx, 1);
     }
     
-    if (this.ctx.$reviewArea) {
-      this.ctx.$reviewArea.find(`.quploader-review-item[data-id="${fileId}"]`).remove();
+    if (this.ctx.reviewArea) {
+      const item = this.ctx.reviewArea.querySelector(`.quploader-review-item[data-id="${fileId}"]`);
+      if (item) item.remove();
     }
     
     if (this.ctx.options.reviewMode === 'single' && this.ctx.files.length === 0) {
-      this.ctx.$container.css('background-image', '');
+      this.ctx.container.style.backgroundImage = '';
     }
 
     if (this.ctx.options.onDeleted) this.ctx.options.onDeleted(file);

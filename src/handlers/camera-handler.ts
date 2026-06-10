@@ -1,5 +1,4 @@
 import { QUploader } from '../types';
-import $ from 'jquery';
 
 export class CameraHandler {
   private ctx: QUploader.CoreContext;
@@ -112,100 +111,118 @@ export class CameraHandler {
       return { bestBack, bestFront };
     };
 
-    const $modal = $(`
-      <div class="quploader-camera-modal${isMobile ? ' quploader-is-mobile' : ''}">
-        <div class="quploader-camera-content">
-          <div class="quploader-camera-video-container">
-            <video autoplay playsinline muted class="quploader-camera-video"></video>
-            <div class="quploader-camera-grid" style="display:none;"></div>
+    const modal = document.createElement('div');
+    modal.className = `quploader-camera-modal${isMobile ? ' quploader-is-mobile' : ''}`;
+    modal.innerHTML = `
+      <div class="quploader-camera-content">
+        <div class="quploader-camera-video-container">
+          <video autoplay playsinline muted class="quploader-camera-video"></video>
+          <div class="quploader-camera-grid" style="display:none;"></div>
+        </div>
+        <div class="quploader-camera-preview-container">
+          <canvas class="quploader-camera-preview"></canvas>
+        </div>
+        
+        <!-- Camera Settings Panel -->
+        <div class="quploader-camera-settings-panel" style="display:none;">
+          <div class="quploader-settings-header">
+            <h3>Camera Settings</h3>
+            <button type="button" class="quploader-btn-settings-close">×</button>
           </div>
-          <div class="quploader-camera-preview-container">
-            <canvas class="quploader-camera-preview"></canvas>
-          </div>
-          
-          <!-- Camera Settings Panel -->
-          <div class="quploader-camera-settings-panel" style="display:none;">
-            <div class="quploader-settings-header">
-              <h3>Camera Settings</h3>
-              <button type="button" class="quploader-btn-settings-close">×</button>
+          <div class="quploader-settings-body">
+            <div class="quploader-setting-row">
+              <label>Active Resolution</label>
+              <span class="quploader-resolution-status" style="font-size: 13px; color: #a8ffb2; display: block; margin-top: 4px;">Detecting...</span>
             </div>
-            <div class="quploader-settings-body">
-              <div class="quploader-setting-row">
-                <label>Active Resolution</label>
-                <span class="quploader-resolution-status" style="font-size: 13px; color: #a8ffb2; display: block; margin-top: 4px;">Detecting...</span>
-              </div>
 
-              <div class="quploader-setting-row">
-                <label>Aspect Ratio</label>
-                <select class="quploader-select-ratio">
-                  <option value="4:3">4:3 Standard</option>
-                  <option value="16:9" selected>16:9 Widescreen</option>
-                  <option value="1:1">1:1 Square</option>
-                </select>
-              </div>
-              <div class="quploader-setting-row">
-                <label>Filter</label>
-                <select class="quploader-select-filter">
-                  <option value="none" selected>Normal</option>
-                  <option value="grayscale">Grayscale</option>
-                  <option value="sepia">Sepia</option>
-                  <option value="vintage">Vintage</option>
-                  <option value="cool">Cool</option>
-                  <option value="vivid">Vivid</option>
-                  <option value="contrast">High Contrast</option>
-                </select>
-              </div>
+            <div class="quploader-setting-row">
+              <label>Aspect Ratio</label>
+              <select class="quploader-select-ratio">
+                <option value="4:3">4:3 Standard</option>
+                <option value="16:9" selected>16:9 Widescreen</option>
+                <option value="1:1">1:1 Square</option>
+              </select>
             </div>
-          </div>
-
-          <div class="quploader-camera-toolbar">
-            <button type="button" class="quploader-btn-switch" title="Switch Camera">🔄</button>
-            <button type="button" class="quploader-btn-torch" title="Toggle Flash" style="display:none;">⚡</button>
-            <button type="button" class="quploader-btn-grid-toggle" title="Toggle Grid">▦</button>
-            <button type="button" class="quploader-btn-mirror-toggle" title="Toggle Mirror">↔️</button>
-            <button type="button" class="quploader-btn-settings-toggle" title="Settings">⚙️</button>
-            <button type="button" class="quploader-btn-fullscreen" title="Toggle Fullscreen">⛶</button>
-          </div>
-          <div class="quploader-camera-controls">
-            <button type="button" class="quploader-btn-close" title="Close">Close</button>
-            <button type="button" class="quploader-btn-capture" title="Capture"></button>
-          </div>
-          <div class="quploader-camera-preview-controls">
-            <button type="button" class="quploader-btn-retake">↩ Retake</button>
-            <button type="button" class="quploader-btn-rotate">↻ Rotate</button>
-            <button type="button" class="quploader-btn-use-photo">✔ Use Photo</button>
+            <div class="quploader-setting-row">
+              <label>Filter</label>
+              <select class="quploader-select-filter">
+                <option value="none" selected>Normal</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="sepia">Sepia</option>
+                <option value="vintage">Vintage</option>
+                <option value="cool">Cool</option>
+                <option value="vivid">Vivid</option>
+                <option value="contrast">High Contrast</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
-    `);
 
-    $('body').append($modal);
-    $('body').addClass('quploader-camera-opening');
-    const modalEl = $modal[0];
-    const video = $modal.find('.quploader-camera-video')[0] as HTMLVideoElement;
-    const canvas = $modal.find('.quploader-camera-preview')[0] as HTMLCanvasElement;
-    const videoContainer = $modal.find('.quploader-camera-video-container')[0] as HTMLDivElement;
+        <div class="quploader-camera-toolbar">
+          <button type="button" class="quploader-btn-switch" title="Switch Camera">🔄</button>
+          <button type="button" class="quploader-btn-torch" title="Toggle Flash" style="display:none;">⚡</button>
+          <button type="button" class="quploader-btn-grid-toggle" title="Toggle Grid">▦</button>
+          <button type="button" class="quploader-btn-mirror-toggle" title="Toggle Mirror">↔️</button>
+          <button type="button" class="quploader-btn-settings-toggle" title="Settings">⚙️</button>
+          <button type="button" class="quploader-btn-fullscreen" title="Toggle Fullscreen">⛶</button>
+        </div>
+        <div class="quploader-camera-controls">
+          <button type="button" class="quploader-btn-close" title="Close">Close</button>
+          <button type="button" class="quploader-btn-capture" title="Capture"></button>
+        </div>
+        <div class="quploader-camera-preview-controls">
+          <button type="button" class="quploader-btn-retake">↩ Retake</button>
+          <button type="button" class="quploader-btn-rotate">↻ Rotate</button>
+          <button type="button" class="quploader-btn-use-photo">✔ Use Photo</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.classList.add('quploader-camera-opening');
+
+    const video = modal.querySelector('.quploader-camera-video') as HTMLVideoElement;
+    const canvas = modal.querySelector('.quploader-camera-preview') as HTMLCanvasElement;
+    const videoContainer = modal.querySelector('.quploader-camera-video-container') as HTMLDivElement;
+    const btnSwitch = modal.querySelector('.quploader-btn-switch') as HTMLButtonElement;
+    const btnTorch = modal.querySelector('.quploader-btn-torch') as HTMLButtonElement;
+    const btnGridToggle = modal.querySelector('.quploader-btn-grid-toggle') as HTMLButtonElement;
+    const btnMirrorToggle = modal.querySelector('.quploader-btn-mirror-toggle') as HTMLButtonElement;
+    const btnSettingsToggle = modal.querySelector('.quploader-btn-settings-toggle') as HTMLButtonElement;
+    const btnSettingsClose = modal.querySelector('.quploader-btn-settings-close') as HTMLButtonElement;
+    const btnFullscreen = modal.querySelector('.quploader-btn-fullscreen') as HTMLButtonElement;
+    const btnClose = modal.querySelector('.quploader-btn-close') as HTMLButtonElement;
+    const btnCapture = modal.querySelector('.quploader-btn-capture') as HTMLButtonElement;
+    const btnRetake = modal.querySelector('.quploader-btn-retake') as HTMLButtonElement;
+    const btnRotate = modal.querySelector('.quploader-btn-rotate') as HTMLButtonElement;
+    const btnUsePhoto = modal.querySelector('.quploader-btn-use-photo') as HTMLButtonElement;
+    const selectRatio = modal.querySelector('.quploader-select-ratio') as HTMLSelectElement;
+    const selectFilter = modal.querySelector('.quploader-select-filter') as HTMLSelectElement;
+    const resolutionStatus = modal.querySelector('.quploader-resolution-status') as HTMLSpanElement;
+    const cameraGrid = modal.querySelector('.quploader-camera-grid') as HTMLDivElement;
+    const settingsPanel = modal.querySelector('.quploader-camera-settings-panel') as HTMLDivElement;
 
     const updateFullscreenButtonState = () => {
       const doc = document as any;
       const isFull = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
-      $modal.find('.quploader-btn-fullscreen').toggleClass('quploader-btn-active', isFull);
+      btnFullscreen.classList.toggle('quploader-btn-active', isFull);
     };
 
     const cleanup = () => {
-      $(window).off('keydown', keydownHandler);
-      $(window).off('resize', resizeHandler);
+      window.removeEventListener('keydown', keydownHandler);
+      window.removeEventListener('resize', resizeHandler);
       document.removeEventListener('fullscreenchange', updateFullscreenButtonState);
       document.removeEventListener('webkitfullscreenchange', updateFullscreenButtonState);
       document.removeEventListener('mozfullscreenchange', updateFullscreenButtonState);
       document.removeEventListener('MSFullscreenChange', updateFullscreenButtonState);
     };
 
-    const keydownHandler = (e: any) => {
-      if (e.key === 'Escape') this.closeCamera($modal, cleanup);
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') this.closeCamera(modal, cleanup);
     };
-    $(window).on('keydown', keydownHandler);
-    $(window).on('resize', resizeHandler);
+
+    window.addEventListener('keydown', keydownHandler);
+    window.addEventListener('resize', resizeHandler);
 
     document.addEventListener('fullscreenchange', updateFullscreenButtonState);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButtonState);
@@ -260,9 +277,9 @@ export class CameraHandler {
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         // Always show switch button on mobile, or if more than 1 camera is detected
         if (videoDevices.length <= 1 && !isMobile) {
-          $modal.find('.quploader-btn-switch').hide();
+          btnSwitch.style.display = 'none';
         } else {
-          $modal.find('.quploader-btn-switch').show();
+          btnSwitch.style.display = 'block';
         }
       } catch (err) {
         console.warn('Enumerate devices failed:', err);
@@ -308,7 +325,6 @@ export class CameraHandler {
     }
 
     function updateViewfinderAspectRatio() {
-      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
       const viewportW = window.innerWidth;
       const viewportH = window.innerHeight;
 
@@ -327,14 +343,12 @@ export class CameraHandler {
         width = height * currentViewfinderRatio;
       }
 
-      $(videoContainer).css({
-        width: Math.round(width) + 'px',
-        height: Math.round(height) + 'px'
-      });
+      videoContainer.style.width = Math.round(width) + 'px';
+      videoContainer.style.height = Math.round(height) + 'px';
     }
 
     function resizeHandler() {
-      if (!$modal.hasClass('quploader-in-review')) {
+      if (!modal.classList.contains('quploader-in-review')) {
         calculateStreamingRatio();
       }
       updateViewfinderAspectRatio();
@@ -399,7 +413,7 @@ export class CameraHandler {
         if (videoTrack) {
           const settings = videoTrack.getSettings();
           if (settings.width && settings.height) {
-            $modal.find('.quploader-resolution-status').text(`Active Resolution: ${settings.width}x${settings.height}`);
+            resolutionStatus.textContent = `Active Resolution: ${settings.width}x${settings.height}`;
           }
           if (settings.deviceId) {
             currentDeviceId = settings.deviceId;
@@ -433,12 +447,12 @@ export class CameraHandler {
 
             if (caps.torch) {
               torchSupported = true;
-              $modal.find('.quploader-btn-torch').show();
+              btnTorch.style.display = 'block';
               torchOn = false;
-              $modal.find('.quploader-btn-torch').removeClass('quploader-btn-torch-active');
+              btnTorch.classList.remove('quploader-btn-torch-active');
             } else {
               torchSupported = false;
-              $modal.find('.quploader-btn-torch').hide();
+              btnTorch.style.display = 'none';
             }
 
             if (caps.zoom) {
@@ -454,15 +468,15 @@ export class CameraHandler {
             console.warn('Could not read track capabilities:', err);
           }
         } else {
-          $modal.find('.quploader-btn-torch').hide();
+          btnTorch.style.display = 'none';
           zoomSupported = false;
           zoomCapabilities = null;
           currentZoom = 1;
         }
 
         // Apply visual states (filter, mirroring)
-        $(video).css('filter', getFilterCSS(selectedFilter));
-        $(video).toggleClass('quploader-mirror-active', isMirrored);
+        video.style.filter = getFilterCSS(selectedFilter);
+        video.classList.toggle('quploader-mirror-active', isMirrored);
 
       } catch (err) {
         console.error('Camera access failed:', err);
@@ -483,7 +497,7 @@ export class CameraHandler {
 
     // ── Quick Toolbar Actions ─────────────────────────────────────────────
     // Switch between the best Back and best Front camera
-    $modal.find('.quploader-btn-switch').on('click', async () => {
+    btnSwitch.addEventListener('click', async () => {
       try {
         if (currentFacingMode === 'environment') {
           currentFacingMode = 'user';
@@ -492,7 +506,7 @@ export class CameraHandler {
           currentFacingMode = 'environment';
           isMirrored = false; // Disable mirror by default for back camera
         }
-        $modal.find('.quploader-btn-mirror-toggle').toggleClass('quploader-btn-active', isMirrored);
+        btnMirrorToggle.classList.toggle('quploader-btn-active', isMirrored);
         
         currentDeviceId = ''; // Clear deviceId so it starts fresh with the new facingMode
         hasAutoSelectedBestBack = false; // Reset so that if we switched to environment, it auto-selects the best back camera
@@ -504,12 +518,12 @@ export class CameraHandler {
     });
 
     // Torch/Flash toggle
-    $modal.find('.quploader-btn-torch').on('click', async () => {
+    btnTorch.addEventListener('click', async () => {
       if (!videoTrack || !torchSupported) return;
       torchOn = !torchOn;
       try {
         await (videoTrack as any).applyConstraints({ advanced: [{ torch: torchOn }] });
-        $modal.find('.quploader-btn-torch').toggleClass('quploader-btn-torch-active', torchOn);
+        btnTorch.classList.toggle('quploader-btn-torch-active', torchOn);
       } catch (err) {
         console.warn('Torch toggle failed:', err);
         torchOn = !torchOn;
@@ -517,37 +531,39 @@ export class CameraHandler {
     });
 
     // Grid toggle
-    $modal.find('.quploader-btn-grid-toggle').on('click', () => {
+    btnGridToggle.addEventListener('click', () => {
       gridOn = !gridOn;
-      $modal.find('.quploader-camera-grid').toggle(gridOn);
-      $modal.find('.quploader-btn-grid-toggle').toggleClass('quploader-btn-active', gridOn);
+      cameraGrid.style.display = gridOn ? 'block' : 'none';
+      btnGridToggle.classList.toggle('quploader-btn-active', gridOn);
     });
 
     // Mirror toggle
-    $modal.find('.quploader-btn-mirror-toggle').on('click', () => {
+    btnMirrorToggle.addEventListener('click', () => {
       isMirrored = !isMirrored;
-      $(video).toggleClass('quploader-mirror-active', isMirrored);
-      $modal.find('.quploader-btn-mirror-toggle').toggleClass('quploader-btn-active', isMirrored);
+      video.classList.toggle('quploader-mirror-active', isMirrored);
+      btnMirrorToggle.classList.toggle('quploader-btn-active', isMirrored);
     });
 
     // Settings Panel toggling
-    $modal.find('.quploader-btn-settings-toggle, .quploader-btn-settings-close').on('click', () => {
-      $modal.find('.quploader-camera-settings-panel').toggle();
-    });
+    const toggleSettingsPanel = () => {
+      settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+    };
+    btnSettingsToggle.addEventListener('click', toggleSettingsPanel);
+    btnSettingsClose.addEventListener('click', toggleSettingsPanel);
 
     // Fullscreen toggling
-    $modal.find('.quploader-btn-fullscreen').on('click', () => {
+    btnFullscreen.addEventListener('click', () => {
       const doc = document as any;
-      const modal = modalEl as any;
+      const modalEl = modal as any;
       if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
-        if (modal.requestFullscreen) {
-          modal.requestFullscreen().catch((err: any) => console.warn('Request fullscreen failed:', err));
-        } else if (modal.webkitRequestFullscreen) {
-          modal.webkitRequestFullscreen();
-        } else if (modal.mozRequestFullScreen) {
-          modal.mozRequestFullScreen();
-        } else if (modal.msRequestFullscreen) {
-          modal.msRequestFullscreen();
+        if (modalEl.requestFullscreen) {
+          modalEl.requestFullscreen().catch((err: any) => console.warn('Request fullscreen failed:', err));
+        } else if (modalEl.webkitRequestFullscreen) {
+          modalEl.webkitRequestFullscreen();
+        } else if (modalEl.mozRequestFullScreen) {
+          modalEl.mozRequestFullScreen();
+        } else if (modalEl.msRequestFullscreen) {
+          modalEl.msRequestFullscreen();
         }
       } else {
         if (doc.exitFullscreen) {
@@ -563,17 +579,14 @@ export class CameraHandler {
     });
 
     // ── Settings Panel Change Handlers ──────────────────────────────────
-
-
-
-    $modal.find('.quploader-select-ratio').on('change', (e) => {
+    selectRatio.addEventListener('change', (e) => {
       selectedRatio = (e.target as HTMLSelectElement).value as any;
       startStream();
     });
 
-    $modal.find('.quploader-select-filter').on('change', (e) => {
+    selectFilter.addEventListener('change', (e) => {
       selectedFilter = (e.target as HTMLSelectElement).value;
-      $(video).css('filter', getFilterCSS(selectedFilter));
+      video.style.filter = getFilterCSS(selectedFilter);
     });
 
     // ── Capture and Photo Review ──────────────────────────────────────────
@@ -656,7 +669,7 @@ export class CameraHandler {
       return { isPortrait };
     };
 
-    $modal.find('.quploader-btn-capture').on('click', async () => {
+    btnCapture.addEventListener('click', async () => {
       try {
         let vw = video.videoWidth;
         let vh = video.videoHeight;
@@ -748,12 +761,10 @@ export class CameraHandler {
           updateViewfinderAspectRatio();
 
           const dataUrl = canvas.toDataURL('image/jpeg');
-          $(videoContainer).css({
-            'background-image': `url(${dataUrl})`,
-            'background-size': 'contain',
-            'background-position': 'center',
-            'background-repeat': 'no-repeat'
-          });
+          videoContainer.style.backgroundImage = `url(${dataUrl})`;
+          videoContainer.style.backgroundSize = 'contain';
+          videoContainer.style.backgroundPosition = 'center';
+          videoContainer.style.backgroundRepeat = 'no-repeat';
         };
 
         renderRotatedPreview();
@@ -764,16 +775,16 @@ export class CameraHandler {
         } catch (pauseErr) {
           console.warn('video.pause() failed:', pauseErr);
         }
-        $modal.addClass('quploader-in-review');
+        modal.classList.add('quploader-in-review');
 
         // Manual Rotation Button Handler
-        $modal.find('.quploader-btn-rotate').off('click').on('click', () => {
+        btnRotate.addEventListener('click', () => {
           rotationAngle = (rotationAngle + 90) % 360;
           renderRotatedPreview();
         });
 
         // Use Photo Confirm Handler
-        $modal.find('.quploader-btn-use-photo').off('click').on('click', () => {
+        btnUsePhoto.addEventListener('click', () => {
           const exportCanvas = document.createElement('canvas');
           drawProcessedImage(exportCanvas, rawCapturedCanvas, rotationAngle, selectedRatio);
 
@@ -782,7 +793,7 @@ export class CameraHandler {
             const ext = blob.type === 'image/jpeg' ? 'jpg' : 'png';
             const file = new File([blob], `capture_${Date.now()}.${ext}`, { type: blob.type });
             this.ctx.handleFiles([file]);
-            this.closeCamera($modal, cleanup);
+            this.closeCamera(modal, cleanup);
           }, 'image/jpeg', 0.95);
         });
 
@@ -793,7 +804,7 @@ export class CameraHandler {
     });
 
     // Retake button Handler
-    $modal.find('.quploader-btn-retake').on('click', async () => {
+    btnRetake.addEventListener('click', async () => {
       try {
         await video.play();
         calculateStreamingRatio();
@@ -801,17 +812,17 @@ export class CameraHandler {
       } catch (playErr) {
         console.warn('video.play() failed on retake:', playErr);
       }
-      $(videoContainer).css('background-image', '');
-      $modal.removeClass('quploader-in-review');
+      videoContainer.style.backgroundImage = '';
+      modal.classList.remove('quploader-in-review');
     });
 
     // Close button Handler
-    $modal.find('.quploader-btn-close').on('click', () => {
-      this.closeCamera($modal, cleanup);
+    btnClose.addEventListener('click', () => {
+      this.closeCamera(modal, cleanup);
     });
   }
 
-  private closeCamera($modal: JQuery, cleanup?: () => void): void {
+  private closeCamera(modal: HTMLElement, cleanup?: () => void): void {
     if (cleanup) {
       try {
         cleanup();
@@ -835,7 +846,7 @@ export class CameraHandler {
       this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
     }
-    $modal.remove();
-    $('body').removeClass('quploader-camera-opening');
+    modal.remove();
+    document.body.classList.remove('quploader-camera-opening');
   }
 }
