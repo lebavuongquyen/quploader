@@ -19,6 +19,7 @@ export class ServerHandler {
 
       if (!this.ctx.options.uploadUrl) {
         console.warn('QUploader: uploadUrl is not defined');
+        file.status = 'error';
         resolve();
         return;
       }
@@ -150,7 +151,10 @@ export class ServerHandler {
   }
 
   private async uploadChunkedFile(file: QUploader.File): Promise<void> {
-    if (!this.ctx.options.chunkUploadUrl || !this.ctx.options.chunkSize) return;
+    if (!this.ctx.options.chunkUploadUrl || !this.ctx.options.chunkSize) {
+      file.status = 'error';
+      return;
+    }
 
     file.status = 'uploading';
     if (this.ctx.options.onUploadStart) this.ctx.options.onUploadStart(file);

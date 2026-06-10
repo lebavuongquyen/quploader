@@ -1,56 +1,74 @@
 # QUploader
 
-**QUploader** is a lightweight, modern, and highly modular jQuery file upload plugin written in **TypeScript**. It features WebRTC camera capture, client-side image resizing, chunked/resumable uploading, sync cancellation, auto-theme matching, and rich hook callbacks. It compiles into a single, unified client bundle (`quploader.min.js`) containing both logic and styles.
+**QUploader** is a lightweight, modern, and highly modular file upload library written in **TypeScript**. It operates natively as a dependency-free Vanilla JavaScript class, and automatically registers a backward-compatible jQuery plugin wrapper when jQuery is detected. 
+
+It features WebRTC camera capture, client-side image resizing, chunked/resumable uploading, sync cancellation, auto-theme matching, and rich hook callbacks. It compiles into a single, unified client distribution bundle (`dist/quploader.min.js`) containing both the logic and inline styles.
 
 ---
 
 ## 🚀 Features
 
+- 🍦 **Vanilla JS Core**: Pure TypeScript class requiring no external framework or libraries (e.g. jQuery).
+- 🔌 **jQuery Compatibility Wrapper**: Seamlessly hooks into `$.fn.quploader` automatically if jQuery is loaded, ensuring legacy pages continue to run unchanged.
 - 📸 **WebRTC Camera Capture**: Directly stream and capture photos inside the uploader using `getUserMedia`, featuring orientation detection, torch control, capture previews, and mobile-friendly full-screen views.
-- 📦 **Chunked & Resumable Uploads**: Supports slicing large files into chunks for parallel/sequential uploading, with auto-resume based on `localStorage` state verification.
+- 📦 **Chunked & Resumable Uploads**: Slices large files into chunks for sequential uploading, with automatic resuming based on `localStorage` state verification.
 - ✂️ **Client-Side Image Resizing**: Automatic scaling of images using HTML5 Canvas prior to upload, keeping payloads optimized.
-- 🔗 **Extended File APIs**: Programs can invoke `file.toBase64()`, `file.resize(options)`, or `file.toResizedBase64(options)` directly on QUploader's active File objects.
-- 🚫 **Sync Cancellation**: Cleanly aborts client-side requests (`XHR`/`AbortController`) and triggers a server-side cleanup request to `cancelUrl` using a unique session `uploadId`.
+- 🚫 **Sync Cancellation**: Cleanly aborts client-side requests (`XHR` / `AbortController`) and triggers a server-side cleanup request to `cancelUrl` using a unique session `uploadId`.
 - 📁 **Folder & Drag-Drop Support**: Handles directory structures via drag-and-drop or folder-browse configurations with custom subfolder depth control.
 - 🌓 **Dynamic Dark Mode**: Auto-detects OS theme preferences (`prefers-color-scheme`) or accepts manual toggle configs.
 - 🏷️ **Flexibility**: Operates either as a standard uploader or as a pure file picker/review widget when no `uploadUrl` is specified.
 
 ---
 
-## 🛠️ Installation
+## 🛠️ Installation & Building
 
 Build the single-file distribution code:
 ```bash
-npm run build
+npm run build:lib
 ```
-This produces `dist/quploader.min.js` which you can reference directly in your web project.
+This compiles the standalone package into `dist/quploader.min.js` containing the logic and embedded styles.
 
 ---
 
 ## 📝 Usage
+
+### 1. Vanilla JavaScript Usage
+
+```html
+<!-- Container element -->
+<div id="myUploader"></div>
+
+<!-- Include QUploader -->
+<script type="module">
+  import { QUploader } from './dist/quploader.min.js';
+
+  const uploader = new QUploader(document.getElementById('myUploader'), {
+    uploadUrl: '/api/upload',
+    multiple: true,
+    cameraButton: true,
+    onSuccess: (file, response) => {
+      console.log('Successfully uploaded:', file.name, response);
+    }
+  });
+</script>
+```
+
+### 2. jQuery Backward-Compatible Usage
 
 ```html
 <!-- Container element -->
 <div id="myUploader"></div>
 
 <!-- Include jQuery and QUploader -->
-<script src="path/to/jquery.min.js"></script>
-<script src="dist/quploader.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="./dist/quploader.min.js"></script>
 
 <script>
   $(document).ready(function() {
     $('#myUploader').quploader({
       uploadUrl: '/api/upload',
-      chunkUploadUrl: '/api/chunk-upload',
-      cancelUrl: '/api/cancel',
-      deleteUrl: '/api/delete',
       multiple: true,
       cameraButton: true,
-      darkMode: 'auto',
-      resize: {
-        maxWidth: 1024,
-        maxHeight: 1024
-      },
       onSuccess: function(file, response) {
         console.log('Successfully uploaded:', file.name, response);
       }
@@ -65,11 +83,11 @@ This produces `dist/quploader.min.js` which you can reference directly in your w
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `uploadUrl` | `string` | `''` | (Optional) Target URL for regular uploads. Can be empty for pick-only/headless flows. |
+| `uploadUrl` | `string` | `''` | Target URL for regular uploads. Can be empty for pick-only/headless flows. |
 | `chunkUploadUrl` | `string` | `undefined` | Target URL for chunked uploads. |
 | `cancelUrl` | `string` | `undefined` | Endpoint invoked upon client aborting/cancelling active uploads. |
 | `deleteUrl` | `string` | `undefined` | Endpoint invoked when deleting completed uploads on the server. |
-| `multiple` | `boolean` | `true` | Allows selecting/picking multiple files. |
+| `multiple` | `boolean` | `false` | Allows selecting/picking multiple files. |
 | `dragDrop` | `boolean` | `true` | Enables drop-zone events on the main container. |
 | `browseButton` | `boolean` | `true` | Renders a standard file browse trigger button. |
 | `clickReviewAreaToBrowse` | `boolean` | `false` | Click inside review area triggers the file browse dialog. |
@@ -81,12 +99,12 @@ This produces `dist/quploader.min.js` which you can reference directly in your w
 | `maxFileSize` | `number \| string`| `undefined` | Max file size limit (e.g., `10485760` or `'10MB'`). |
 | `chunkSize` | `number \| string`| `undefined` | Size of chunks for sliced upload (e.g., `'2MB'`). |
 | `retry` | `number` | `3` | Number of retry attempts on failed chunk transfers. |
-| `cancel` | `boolean` | `true` | Displays cancel/delete buttons on files. |
+| `cancel` | `boolean` | `true` | Stashes cancel parameters in options. |
 | `reviewMode` | `string` | `'thumbnail'` | Layout style: `'thumbnail'`, `'detail'`, or `'single'`. |
 | `singleModeFit` | `string` | `'cover'` | CSS fit for single image mode: `'cover'` or `'contain'`. |
 | `reviewPosition` | `string` | `'below'` | Positions preview area relative to controls: `'below'`, `'above'`, or `'none'`. |
 | `showFileName` | `boolean` | `true` | Shows file titles in the review UI. |
-| `errorDelay` | `number` | `5000` | Autohide timer in milliseconds for validation alerts. |
+| `errorDelay` | `number` | `3000` | Autohide timer in milliseconds for validation alerts. |
 | `resize` | `object` | `undefined` | Image downsizing specs `{ maxWidth, maxHeight }`. |
 | `autoUpload` | `boolean` | `true` | Triggers upload immediately after selection. |
 | `progressBar` | `boolean` | `true` | Renders progress indicators per item. |
@@ -97,7 +115,7 @@ This produces `dist/quploader.min.js` which you can reference directly in your w
 | `useIcon` | `boolean` | `false` | Replaces text labels on control buttons with icons. |
 | `darkMode` | `boolean \| 'auto'` | `false` | Sets Dark Mode theme. `'auto'` binds to OS color settings. |
 | `resumable` | `boolean` | `true` | Caches chunk indices in local storage to resume interrupted uploads. |
-| `preferFileInput` | `boolean` | `true` | Uses HTML standard input clicks. If `false`, tries File System Access API where supported. |
+| `preferFileInput` | `boolean` | `true` | Uses HTML standard input clicks. |
 | `headless` | `boolean` | `false` | Set to `true` to bind uploader triggers to custom UI elements. |
 | `mode` | `string` | `undefined` | Headless mode trigger type: `'browseFile'`, `'browseFolder'`, `'camera'`, or `'dropzone'`. |
 
@@ -105,7 +123,21 @@ This produces `dist/quploader.min.js` which you can reference directly in your w
 
 ## 🕹️ Programmatic Methods
 
-Methods can be invoked using jQuery plugin syntax:
+### Vanilla JS Call Example:
+```javascript
+const uploader = new QUploader(element, config);
+
+// Trigger uploads of all queued files
+uploader.uploadAll();
+
+// Reset and empty the upload list
+uploader.clearQueue();
+
+// Get all files currently managed by the uploader
+const files = uploader.getFiles();
+```
+
+### jQuery Call Example:
 ```javascript
 // Trigger uploads of all queued files
 $('#myUploader').quploader('uploadAll');
@@ -115,38 +147,6 @@ $('#myUploader').quploader('clearQueue');
 
 // Get all files currently managed by the uploader
 const files = $('#myUploader').quploader('getFiles');
-
-// Get the active file (primarily for single selection configurations)
-const currentFile = $('#myUploader').quploader('currentFile');
-
-// Imperatively trigger pickers in headless mode
-$('#myUploader').quploader('browseFile');
-$('#myUploader').quploader('browseFolder');
-$('#myUploader').quploader('camera');
-```
-
----
-
-## 💾 Extended File APIs
-
-Active `QUploader.File` instances in the queue (or returned in callbacks) are extended with the following asynchronous APIs:
-
-### `file.toBase64(): Promise<string>`
-Converts the local file into a Base64 encoded DataURL.
-```javascript
-const base64String = await file.toBase64();
-```
-
-### `file.resize(options?: ResizeOptions): Promise<File>`
-Resizes the file client-side using custom dimensions. Returns a new resized `File` instance.
-```javascript
-const resizedFile = await file.resize({ maxWidth: 800, maxHeight: 600 });
-```
-
-### `file.toResizedBase64(options?: ResizeOptions): Promise<string>`
-Directly scales down the image and encodes it as a Base64 string in a single call.
-```javascript
-const base64Resized = await file.toResizedBase64({ maxWidth: 500, maxHeight: 500 });
 ```
 
 ---
@@ -168,49 +168,33 @@ const base64Resized = await file.toResizedBase64({ maxWidth: 500, maxHeight: 500
 
 ---
 
-## 🙈 Headless Mode
+## 🔒 Developer Workflow & Commit Guard
 
-Headless Mode lets you bind file picking, directory selection, camera captures, or drop events directly to your own custom DOM elements (such as buttons, inputs, or divs) without rendering any default QUploader markup or file cards.
+To ensure high codebase reliability, contributors and agent models **MUST** strictly follow the verification workflow below before committing or pushing any code to GitHub:
 
-```javascript
-// 1. File picker button
-$('#btnBrowse').quploader('browseFile', {
-  autoUpload: false,
-  onPick: (files) => {
-    console.log("Selected:", files);
-  }
-});
+### 1. Verification Checklist (Local Sandbox Setup)
+Make sure the mock backend and Vite dev servers are functional:
+- Install dependencies: `npm install`
+- Start Express backend and Vite:
+  ```bash
+  node test-server.js
+  npm run dev
+  ```
 
-// 2. Drag & drop zone
-$('#dropArea').quploader('dropzone', {
-  autoUpload: false,
-  onPick: (files) => {
-    console.log("Dropped:", files);
-  }
-});
-```
-
----
-
-## 🌐 Testing Demos
-
-The repository includes a multi-page sandbox architecture to test all features easily.
-
-### Local Server Setup
-1. Install dependencies:
+### 2. Strict Quality Control Commands
+Before pushing to git, the code **MUST** successfully build and pass all tests:
+1. **Run automated test suite**:
    ```bash
-   npm install
+   npm run test
    ```
-2. Start the Vite development server:
+   *Executes Vitest under happy-dom to verify the 72 unit/configuration tests.*
+2. **Build verification (both targets)**:
    ```bash
-   npm run dev
+   # Verify standalone library packaging compiles without errors
+   npm run build:lib
+   
+   # Verify complete multi-page static site compiles
+   npm run build
    ```
-3. Open the output localhost link in your browser.
 
-
-
-### Available Sandbox Pages
-* **Basic Uploader** (`index.html`): Tests core configurations, dark-mode switches, limits, and standard progress bar grids.
-* **Callbacks & Console** (`callbacks.html`): Tests interactive event handlers with editable javascript callback areas, Base64 image previews, and virtual-scroll event logs.
-* **Headless Uploader** (`headless.html`): Tests custom DOM elements, custom drop-zones, and WebRTC cameras initialized in headless mode.
-* **Documentation** (`docs.html`): The detailed, readable API reference guide built directly into the local dashboard.
+*Do not stage, commit, or push any changes that fail any of the above commands.*

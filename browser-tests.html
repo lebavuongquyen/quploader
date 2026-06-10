@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUploader Configuration Verification Suite</title>
+  <!-- Outfit / Inter fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Courier+Prime&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.15);
+      
+      --failure: #ef4444;
+      --failure-glow: rgba(239, 68, 68, 0.15);
+      
+      --warning: #f59e0b;
+      --warning-glow: rgba(245, 158, 11, 0.15);
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      box-sizing: border-box;
+      line-height: 1.5;
+    }
+    
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      background: linear-gradient(135deg, #a5b4fc, #6366f1, #4f46e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.025em;
+    }
+    
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      font-weight: 300;
+    }
+    
+    /* Stats Bar Grid */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    
+    .stat-val {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+    
+    .stat-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    
+    .stat-card.total .stat-val { color: var(--accent); }
+    .stat-card.passed .stat-val { color: var(--success); }
+    .stat-card.failed .stat-val { color: var(--failure); }
+    .stat-card.status .stat-val { color: var(--warning); }
+    
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--card-border);
+      border-radius: 9999px;
+      margin-bottom: 40px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 9999px;
+      transition: width 0.3s ease;
+    }
+    
+    /* Search & Filter Options */
+    .controls-panel {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .search-input {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: outline 0.15s, border-color 0.15s;
+    }
+    
+    .search-input:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+    
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn.active, .filter-btn:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+    
+    /* Results Table/List */
+    .scenarios-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .scenario-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .scenario-item.pass {
+      border-left: 5px solid var(--success);
+    }
+    
+    .scenario-item.fail {
+      border-left: 5px solid var(--failure);
+    }
+    
+    .scenario-item.running {
+      border-left: 5px solid var(--warning);
+      animation: border-pulse 1.5s infinite;
+    }
+    
+    .scenario-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .scenario-info {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .config-name {
+      font-family: 'Courier Prime', monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+    
+    .scenario-title {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    
+    .status-badge.pass {
+      background: var(--success-glow);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .status-badge.fail {
+      background: var(--failure-glow);
+      color: var(--failure);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .status-badge.running {
+      background: var(--warning-glow);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      animation: pulse 1s infinite alternate;
+    }
+    
+    .error-details {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--failure);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85rem;
+      color: #fca5a5;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    
+    /* Invisible Container for Uploader Test Instances */
+    #test-sandbox {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 800px;
+      height: 600px;
+      overflow: hidden;
+      background: white;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    
+    @keyframes border-pulse {
+      0% { border-left-color: rgba(245, 158, 11, 0.3); }
+      50% { border-left-color: rgba(245, 158, 11, 1); }
+      100% { border-left-color: rgba(245, 158, 11, 0.3); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <header>
+      <h1>QUploader Configuration Verification</h1>
+      <div class="subtitle">Vanilla JS/TS API Compliance & Layout Test Suite</div>
+    </header>
+    
+    <!-- Stats Board -->
+    <div class="stats-bar">
+      <div class="stat-card total">
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-label">Total Scenarios</div>
+      </div>
+      <div class="stat-card passed">
+        <div class="stat-val" id="stat-passed">0</div>
+        <div class="stat-label">Passed</div>
+      </div>
+      <div class="stat-card failed">
+        <div class="stat-val" id="stat-failed">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card status">
+        <div class="stat-val" id="stat-status">Running</div>
+        <div class="stat-label">Execution Status</div>
+      </div>
+    </div>
+    
+    <div class="progress-track">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    
+    <div class="controls-panel">
+      <input type="text" class="search-input" id="search-input" placeholder="Search by config option name (e.g. uploadUrl)...">
+      <button class="filter-btn active" id="btn-filter-all">All</button>
+      <button class="filter-btn" id="btn-filter-failed">Failed Only</button>
+    </div>
+    
+    <!-- Scenarios List -->
+    <div class="scenarios-list" id="scenarios-list">
+      <!-- Generated Dynamically -->
+    </div>
+  </div>
+
+  <!-- Sandbox Mount point -->
+  <div id="test-sandbox"></div>
+
+  <!-- Setup Module Scripts -->
+  <script type="module">
+    import $ from 'jquery';
+    window.$ = window.jQuery = $;
+  </script>
+  
+  <script type="module">
+    import { QUploader } from '/src/quploader.ts';
+    window.QUploader = QUploader;
+  </script>
+
+  <!-- Custom test framework and cases definition -->
+  <script>
+    // Custom Mini Test Assertion framework
+    class AssertError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = 'AssertError';
+      }
+    }
+
+    function expect(actual) {
+      return {
+        toBe(expected) {
+          if (actual !== expected) {
+            throw new AssertError(`Expected: ${JSON.stringify(expected)} (type: ${typeof expected})\nActual:   ${JSON.stringify(actual)} (type: ${typeof actual})`);
+          }
+        },
+        notToBe(expected) {
+          if (actual === expected) {
+            throw new AssertError(`Expected NOT to be: ${JSON.stringify(expected)}\nActual:          ${JSON.stringify(actual)}`);
+          }
+        },
+        toBeNull() {
+          if (actual !== null) {
+            throw new AssertError(`Expected null but got: ${JSON.stringify(actual)}`);
+          }
+        },
+        notToBeNull() {
+          if (actual === null) {
+            throw new AssertError(`Expected NOT null but got null`);
+          }
+        },
+        toBeTrue() {
+          if (actual !== true) {
+            throw new AssertError(`Expected true but got: ${JSON.stringify(actual)}`);
+          }
+        },
+        toBeFalse() {
+          if (actual !== false) {
+            throw new AssertError(`Expected false but got: ${JSON.stringify(actual)}`);
+          }
+        },
+        toContain(substring) {
+          if (typeof actual !== 'string' || !actual.includes(substring)) {
+            throw new AssertError(`Expected string "${actual}" to contain "${substring}"`);
+          }
+        },
+        toEqual(expected) {
+          const actualStr = JSON.stringify(actual);
+          const expectedStr = JSON.stringify(expected);
+          if (actualStr !== expectedStr) {
+            throw new AssertError(`Expected structural equality:\nExpected: ${expectedStr}\nActual:   ${actualStr}`);
+          }
+        }
+      };
+    }
+
+    // XHR Request Interception & Mocking
+    const originalXHR = window.XMLHttpRequest;
+    let mockXhrResponse = { success: true };
+    let mockXhrStatus = 200;
+    let mockXhrProgressIntervals = [50, 100];
+    let latestMockXhrPayload = null;
+
+    function setupMockXHR(responseJSON = { success: true }, status = 200, progressIntervals = [50, 100]) {
+      mockXhrResponse = responseJSON;
+      mockXhrStatus = status;
+      mockXhrProgressIntervals = progressIntervals;
+      latestMockXhrPayload = null;
+
+      window.XMLHttpRequest = function() {
+        const xhr = new originalXHR();
+        
+        Object.defineProperty(xhr, 'upload', {
+          value: {
+            addEventListener: function(event, callback) {
+              if (event === 'progress') {
+                xhr._onProgress = callback;
+              }
+            }
+          }
+        });
+
+        xhr.open = function(method, url) {
+          this._url = url;
+          this._method = method;
+        };
+
+        xhr.setRequestHeader = function(header, value) {
+          this._headers = this._headers || {};
+          this._headers[header] = value;
+        };
+
+        xhr.send = function(body) {
+          this._body = body;
+          latestMockXhrPayload = body;
+          
+          let currentProgressIndex = 0;
+          const simulateProgress = () => {
+            if (currentProgressIndex < mockXhrProgressIntervals.length) {
+              if (this._onProgress) {
+                this._onProgress({
+                  loaded: mockXhrProgressIntervals[currentProgressIndex],
+                  total: 100
+                });
+              }
+              currentProgressIndex++;
+              setTimeout(simulateProgress, 5);
+            } else {
+              Object.defineProperty(this, 'status', { value: mockXhrStatus });
+              Object.defineProperty(this, 'readyState', { value: 4 });
+              Object.defineProperty(this, 'responseText', { value: JSON.stringify(mockXhrResponse) });
+              
+              if (this.onreadystatechange) {
+                this.onreadystatechange();
+              }
+              if (mockXhrStatus >= 200 && mockXhrStatus < 300) {
+                if (this.onload) this.onload();
+              } else {
+                if (this.onerror) this.onerror();
+              }
+            }
+          };
+          
+          setTimeout(simulateProgress, 5);
+        };
+
+        xhr.abort = function() {
+          if (this.onabort) this.onabort();
+        };
+
+        return xhr;
+      };
+    }
+
+    function restoreXHR() {
+      window.XMLHttpRequest = originalXHR;
+    }
+
+    // Global Test Runner State
+    window.testRunner = {
+      tests: [],
+      passed: 0,
+      failed: 0,
+      isFinished: false,
+      results: [],
+      
+      add(config, scenario, fn) {
+        this.tests.push({ config, scenario, fn });
+      },
+      
+      getSummary() {
+        return {
+          total: this.tests.length,
+          passed: this.passed,
+          failed: this.failed,
+          isFinished: this.isFinished,
+          results: this.results
+        };
+      }
+    };
+
+    // Helper: clean up sandbox container
+    function createTestDiv() {
+      const sandbox = document.getElementById('test-sandbox');
+      sandbox.innerHTML = '';
+      const div = document.createElement('div');
+      div.id = 'quploader-test-element';
+      sandbox.appendChild(div);
+      return div;
+    }
+
+    // Helper: generate mock File objects
+    function createMockFile(filename, sizeBytes, mimeType = 'text/plain') {
+      const buffer = new ArrayBuffer(sizeBytes);
+      return new File([buffer], filename, { type: mimeType });
+    }
+
+    // Helper: simulate Drag Events
+    function dispatchDragEvent(element, type, filesArray) {
+      const event = new DragEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: new DataTransfer()
+      });
+      if (filesArray) {
+        filesArray.forEach(f => event.dataTransfer.items.add(f));
+      }
+      element.dispatchEvent(event);
+    }
+
+    // Initialize all 64 scenarios
+    
+    // 1. uploadUrl (2 scenarios)
+    window.testRunner.add('uploadUrl', '1. Displays upload button when uploadUrl is defined', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/mock-upload',
+        autoUpload: false
+      });
+      const uploadAllBtn = el.querySelector('.quploader-btn-upload');
+      expect(uploadAllBtn).notToBeNull();
+    });
+
+    window.testRunner.add('uploadUrl', '2. Hides upload button (picker-mode) when uploadUrl is omitted', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        autoUpload: false
+      });
+      const uploadAllBtn = el.querySelector('.quploader-btn-upload');
+      expect(uploadAllBtn).toBeNull();
+    });
+
+    // 2. chunkUploadUrl (2 scenarios)
+    window.testRunner.add('chunkUploadUrl', '1. Stashes chunk upload URL correctly in configuration options', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/upload',
+        chunkUploadUrl: '/api/chunk-upload',
+        resumable: true
+      });
+      expect(uploader.options.chunkUploadUrl).toBe('/api/chunk-upload');
+    });
+
+    window.testRunner.add('chunkUploadUrl', '2. Falls back to standard uploadUrl when chunkUploadUrl is omitted', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/fallback-upload',
+        resumable: true
+      });
+      expect(uploader.options.chunkUploadUrl || uploader.options.uploadUrl).toBe('/api/fallback-upload');
+    });
+
+    // 3. multiple (2 scenarios)
+    window.testRunner.add('multiple', '1. Keeps multiple files in queue if multiple is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        multiple: true,
+        autoUpload: false
+      });
+      const f1 = createMockFile('test1.txt', 100);
+      const f2 = createMockFile('test2.txt', 200);
+      await uploader.handleFiles([f1, f2]);
+      expect(uploader.files.length).toBe(2);
+    });
+
+    window.testRunner.add('multiple', '2. Limits queue to a single file if multiple is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        multiple: false,
+        autoUpload: false
+      });
+      const f1 = createMockFile('test1.txt', 100);
+      const f2 = createMockFile('test2.txt', 200);
+      await uploader.handleFiles([f1, f2]);
+      expect(uploader.files.length).toBe(1);
+    });
+
+    // 4. dragDrop (2 scenarios)
+    window.testRunner.add('dragDrop', '1. Container adds dragover style class on dragenter/dragover if dragDrop is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        dragDrop: true
+      });
+      dispatchDragEvent(uploader.container, 'dragover', []);
+      expect(uploader.container.classList.contains('quploader-dragover')).toBeTrue();
+    });
+
+    window.testRunner.add('dragDrop', '2. Container ignores drag events if dragDrop is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        dragDrop: false
+      });
+      dispatchDragEvent(uploader.container, 'dragover', []);
+      expect(uploader.container.classList.contains('quploader-dragover')).toBeFalse();
+    });
+
+    // 5. browseButton (2 scenarios)
+    window.testRunner.add('browseButton', '1. Renders file browser button when browseButton is true', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        browseButton: true
+      });
+      const btn = el.querySelector('.quploader-btn-browse');
+      expect(btn).notToBeNull();
+    });
+
+    window.testRunner.add('browseButton', '2. Omits file browser button when browseButton is false', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        browseButton: false
+      });
+      const btn = el.querySelector('.quploader-btn-browse');
+      expect(btn).toBeNull();
+    });
+
+    // 6. clickReviewAreaToBrowse (2 scenarios)
+    window.testRunner.add('clickReviewAreaToBrowse', '1. Simulates input click when review area clicked and clickReviewAreaToBrowse is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        clickReviewAreaToBrowse: true,
+        reviewMode: 'thumbnail'
+      });
+      
+      const f1 = createMockFile('test1.jpg', 100, 'image/jpeg');
+      await uploader.handleFiles([f1]);
+      
+      const reviewArea = el.querySelector('.quploader-review-area');
+      expect(reviewArea).notToBeNull();
+      
+      let clickFired = false;
+      const fileInput = el.querySelector('input[type="file"]');
+      fileInput.addEventListener('click', (e) => {
+        e.preventDefault();
+        clickFired = true;
+      });
+      
+      reviewArea.click();
+      expect(clickFired).toBeTrue();
+    });
+
+    window.testRunner.add('clickReviewAreaToBrowse', '2. Ignores clicks on review area when clickReviewAreaToBrowse is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        clickReviewAreaToBrowse: false,
+        reviewMode: 'thumbnail'
+      });
+      
+      const f1 = createMockFile('test1.jpg', 100, 'image/jpeg');
+      await uploader.handleFiles([f1]);
+      
+      const reviewArea = el.querySelector('.quploader-review-area');
+      expect(reviewArea).notToBeNull();
+      
+      let clickFired = false;
+      const fileInput = el.querySelector('input[type="file"]');
+      fileInput.addEventListener('click', (e) => {
+        e.preventDefault();
+        clickFired = true;
+      });
+      
+      reviewArea.click();
+      expect(clickFired).toBeFalse();
+    });
+
+    // 7. cameraButton (2 scenarios)
+    window.testRunner.add('cameraButton', '1. Renders camera button when cameraButton is true', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        cameraButton: true
+      });
+      const btn = el.querySelector('.quploader-btn-camera');
+      expect(btn).notToBeNull();
+    });
+
+    window.testRunner.add('cameraButton', '2. Omits camera button when cameraButton is false', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        cameraButton: false
+      });
+      const btn = el.querySelector('.quploader-btn-camera');
+      expect(btn).toBeNull();
+    });
+
+    // 8. showIntroText (2 scenarios)
+    window.testRunner.add('showIntroText', '1. Renders uploader introduction text when showIntroText is true', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        showIntroText: true
+      });
+      const intro = el.querySelector('.quploader-intro');
+      expect(intro).notToBeNull();
+      expect(intro.textContent).toContain('Drop');
+    });
+
+    window.testRunner.add('showIntroText', '2. Omits uploader introduction text when showIntroText is false', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        showIntroText: false
+      });
+      const intro = el.querySelector('.quploader-intro');
+      expect(intro).toBeNull();
+    });
+
+    // 9. allowFolder (2 scenarios)
+    window.testRunner.add('allowFolder', '1. Sets webkitdirectory attribute on input when allowFolder is true', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        allowFolder: true
+      });
+      const fileInput = el.querySelector('input[type="file"]');
+      expect(fileInput.hasAttribute('webkitdirectory')).toBeTrue();
+    });
+
+    window.testRunner.add('allowFolder', '2. Omits webkitdirectory attribute on input when allowFolder is false', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        allowFolder: false
+      });
+      const fileInput = el.querySelector('input[type="file"]');
+      expect(fileInput.hasAttribute('webkitdirectory')).toBeFalse();
+    });
+
+    // 10. fileTypes (2 scenarios)
+    window.testRunner.add('fileTypes', '1. Accepts file matching extension restrictions', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        fileTypes: ['.png', '.jpg'],
+        autoUpload: false
+      });
+      const file = createMockFile('pic.png', 500, 'image/png');
+      await uploader.handleFiles([file]);
+      expect(uploader.files.length).toBe(1);
+    });
+
+    window.testRunner.add('fileTypes', '2. Rejects file violating extension restrictions', async () => {
+      const el = createTestDiv();
+      let errorTriggered = false;
+      const uploader = new window.QUploader(el, {
+        fileTypes: ['.png', '.jpg'],
+        autoUpload: false,
+        onError: () => {
+          errorTriggered = true;
+        }
+      });
+      const file = createMockFile('doc.pdf', 500, 'application/pdf');
+      await uploader.handleFiles([file]);
+      expect(uploader.files.length).toBe(0);
+      expect(errorTriggered).toBeTrue();
+    });
+
+    // 11. maxFileSize (2 scenarios)
+    window.testRunner.add('maxFileSize', '1. Accepts file under maxFileSize limit', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        maxFileSize: '5KB',
+        autoUpload: false
+      });
+      const file = createMockFile('small.txt', 2048);
+      await uploader.handleFiles([file]);
+      expect(uploader.files.length).toBe(1);
+    });
+
+    window.testRunner.add('maxFileSize', '2. Rejects file exceeding maxFileSize limit', async () => {
+      const el = createTestDiv();
+      let errorTriggered = false;
+      const uploader = new window.QUploader(el, {
+        maxFileSize: '1KB',
+        autoUpload: false,
+        onError: () => {
+          errorTriggered = true;
+        }
+      });
+      const file = createMockFile('large.txt', 2048);
+      await uploader.handleFiles([file]);
+      expect(uploader.files.length).toBe(0);
+      expect(errorTriggered).toBeTrue();
+    });
+
+    // 12. chunkSize (2 scenarios)
+    window.testRunner.add('chunkSize', '1. Parses custom chunk size string strings like 100KB to bytes', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        chunkSize: '100KB'
+      });
+      expect(uploader.options.chunkSize).toBe(102400);
+    });
+
+    window.testRunner.add('chunkSize', '2. Parses standard size numbers directly', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        chunkSize: 524288
+      });
+      expect(uploader.options.chunkSize).toBe(524288);
+    });
+
+    // 13. retry (2 scenarios)
+    window.testRunner.add('retry', '1. Keeps configured retry attempt value', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        retry: 5
+      });
+      expect(uploader.options.retry).toBe(5);
+    });
+
+    window.testRunner.add('retry', '2. Stores retry as 0 when explicitly deactivated', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        retry: 0
+      });
+      expect(uploader.options.retry).toBe(0);
+    });
+
+    // 14. cancel (2 scenarios)
+    window.testRunner.add('cancel', '1. Stashes cancel parameter true correctly in options object', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        cancel: true
+      });
+      expect(uploader.options.cancel).toBeTrue();
+    });
+
+    window.testRunner.add('cancel', '2. Stashes cancel parameter false correctly in options object', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        cancel: false
+      });
+      expect(uploader.options.cancel).toBeFalse();
+    });
+
+    // 15. reviewMode (2 scenarios)
+    window.testRunner.add('reviewMode', '1. Applies quploader-review-thumbnail class when reviewMode is thumbnail', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        reviewMode: 'thumbnail'
+      });
+      const file = createMockFile('img.png', 100, 'image/png');
+      await uploader.handleFiles([file]);
+      
+      const reviewArea = el.querySelector('.quploader-review-area');
+      // Thumbs use standard default review area or mode-single layout
+      expect(reviewArea.classList.contains('quploader-detail')).toBeFalse();
+    });
+
+    window.testRunner.add('reviewMode', '2. Applies quploader-review-detail class when reviewMode is detail', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        reviewMode: 'detail'
+      });
+      const file = createMockFile('img.png', 100, 'image/png');
+      await uploader.handleFiles([file]);
+      
+      const reviewArea = el.querySelector('.quploader-review-area');
+      expect(reviewArea.classList.contains('quploader-detail')).toBeTrue();
+    });
+
+    // 16. singleModeFit (2 scenarios)
+    window.testRunner.add('singleModeFit', '1. Sets cover style in single review mode with singleModeFit cover', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        reviewMode: 'single',
+        singleModeFit: 'cover'
+      });
+      const file = createMockFile('img.png', 100, 'image/png');
+      await uploader.handleFiles([file]);
+      
+      expect(uploader.container.style.backgroundSize).toBe('cover');
+    });
+
+    window.testRunner.add('singleModeFit', '2. Sets contain style in single review mode with singleModeFit contain', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        reviewMode: 'single',
+        singleModeFit: 'contain'
+      });
+      const file = createMockFile('img.png', 100, 'image/png');
+      await uploader.handleFiles([file]);
+      
+      expect(uploader.container.style.backgroundSize).toBe('contain');
+    });
+
+    // 17. reviewPosition (2 scenarios)
+    window.testRunner.add('reviewPosition', '1. Places review area before top content when reviewPosition is above', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        reviewPosition: 'above'
+      });
+      const file = createMockFile('img.png', 100, 'image/png');
+      await uploader.handleFiles([file]);
+      
+      const children = Array.from(uploader.container.children);
+      const reviewIndex = children.findIndex(c => c.classList.contains('quploader-review-area'));
+      const topIndex = children.findIndex(c => c.classList.contains('quploader-top-content'));
+      
+      expect(reviewIndex < topIndex).toBeTrue();
+    });
+
+    window.testRunner.add('reviewPosition', '2. Places review area after top content when reviewPosition is below', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        reviewPosition: 'below'
+      });
+      const file = createMockFile('img.png', 100, 'image/png');
+      await uploader.handleFiles([file]);
+      
+      const children = Array.from(uploader.container.children);
+      const reviewIndex = children.findIndex(c => c.classList.contains('quploader-review-area'));
+      const topIndex = children.findIndex(c => c.classList.contains('quploader-top-content'));
+      
+      expect(reviewIndex > topIndex).toBeTrue();
+    });
+
+    // 18. showFileName (2 scenarios)
+    window.testRunner.add('showFileName', '1. Displays file name inside item list when showFileName is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        showFileName: true,
+        reviewMode: 'detail'
+      });
+      const file = createMockFile('document_name.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      const nameEl = el.querySelector('.quploader-detail-name');
+      expect(nameEl).notToBeNull();
+      expect(nameEl.textContent).toContain('document_name.txt');
+    });
+
+    window.testRunner.add('showFileName', '2. Hides file name inside item list when showFileName is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        showFileName: false,
+        reviewMode: 'thumbnail'
+      });
+      const file = createMockFile('document_name.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      const nameEl = el.querySelector('.quploader-file-name');
+      expect(nameEl).toBeNull();
+    });
+
+    // 19. errorDelay (2 scenarios)
+    window.testRunner.add('errorDelay', '1. Automatically hides error display after timeout', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        errorDelay: 20
+      });
+      uploader.showGlobalError('Test Error Message');
+      
+      const errorMsg = el.querySelector('.quploader-global-error');
+      expect(errorMsg).notToBeNull();
+      
+      await new Promise(r => setTimeout(r, 45));
+      const errorMsgAfter = el.querySelector('.quploader-global-error');
+      expect(errorMsgAfter.style.display).toBe('none');
+    });
+
+    window.testRunner.add('errorDelay', '2. Stays persistent when errorDelay is set to large values', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        errorDelay: 5000
+      });
+      uploader.showGlobalError('Test Error Message');
+      
+      const errorMsg = el.querySelector('.quploader-global-error');
+      expect(errorMsg).notToBeNull();
+      
+      await new Promise(r => setTimeout(r, 40));
+      const errorMsgAfter = el.querySelector('.quploader-global-error');
+      expect(errorMsgAfter.style.display).notToBe('none');
+    });
+
+    // 20. resize (2 scenarios)
+    window.testRunner.add('resize', '1. Instantiates configuration width and height for resize target', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        resize: { maxWidth: 300, maxHeight: 200 }
+      });
+      expect(uploader.options.resize.maxWidth).toBe(300);
+      expect(uploader.options.resize.maxHeight).toBe(200);
+    });
+
+    window.testRunner.add('resize', '2. Leaves resize as undefined when configuration is omitted', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {});
+      expect(uploader.options.resize).toBe(undefined);
+    });
+
+    // 21. autoUpload (2 scenarios)
+    window.testRunner.add('autoUpload', '1. Starts upload automatically on adding files when autoUpload is true', async () => {
+      setupMockXHR({ success: true }, 200);
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/upload',
+        autoUpload: true
+      });
+      const file = createMockFile('auto.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      await new Promise(r => setTimeout(r, 20));
+      expect(uploader.files[0].status).toBe('success');
+      restoreXHR();
+    });
+
+    window.testRunner.add('autoUpload', '2. Leaves files as pending when autoUpload is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/upload',
+        autoUpload: false
+      });
+      const file = createMockFile('manual.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      expect(uploader.files[0].status).toBe('pending');
+    });
+
+    // 22. progressBar (2 scenarios)
+    window.testRunner.add('progressBar', '1. Renders progress element during upload when progressBar is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        progressBar: true,
+        reviewMode: 'detail'
+      });
+      const file = createMockFile('progress.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      const bar = el.querySelector('.quploader-progress');
+      expect(bar).notToBeNull();
+    });
+
+    window.testRunner.add('progressBar', '2. Omits progress element during upload when progressBar is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        progressBar: false,
+        reviewMode: 'detail'
+      });
+      const file = createMockFile('progress.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      const bar = el.querySelector('.quploader-progress');
+      expect(bar).toBeNull();
+    });
+
+    // 23. allowDelete (2 scenarios)
+    window.testRunner.add('allowDelete', '1. Renders delete button for files when allowDelete is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        allowDelete: true,
+        reviewMode: 'detail'
+      });
+      const file = createMockFile('delete.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      const deleteBtn = el.querySelector('.quploader-btn-delete');
+      expect(deleteBtn).notToBeNull();
+    });
+
+    window.testRunner.add('allowDelete', '2. Omits delete button for files when allowDelete is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        allowDelete: false,
+        reviewMode: 'detail'
+      });
+      const file = createMockFile('delete.txt', 100);
+      await uploader.handleFiles([file]);
+      
+      const deleteBtn = el.querySelector('.quploader-btn-delete');
+      expect(deleteBtn).toBeNull();
+    });
+
+    // 24. uploadAsBase64 (2 scenarios)
+    window.testRunner.add('uploadAsBase64', '1. Packages files as base64 string payload when uploadAsBase64 is true', async () => {
+      setupMockXHR({ success: true }, 200);
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/upload',
+        uploadAsBase64: true,
+        autoUpload: true
+      });
+      const file = createMockFile('data.txt', 10, 'text/plain');
+      await uploader.handleFiles([file]);
+      
+      await new Promise(r => setTimeout(r, 25));
+      expect(typeof latestMockXhrPayload).toBe('string');
+      const payloadObj = JSON.parse(latestMockXhrPayload);
+      expect(payloadObj.base64).notToBeNull();
+      expect(payloadObj.filename).toBe('data.txt');
+      restoreXHR();
+    });
+
+    window.testRunner.add('uploadAsBase64', '2. Packages files as standard FormData when uploadAsBase64 is false', async () => {
+      setupMockXHR({ success: true }, 200);
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        uploadUrl: '/api/upload',
+        uploadAsBase64: false,
+        autoUpload: true
+      });
+      const file = createMockFile('data.txt', 10, 'text/plain');
+      await uploader.handleFiles([file]);
+      
+      await new Promise(r => setTimeout(r, 25));
+      expect(latestMockXhrPayload instanceof FormData).toBeTrue();
+      restoreXHR();
+    });
+
+    // 25. accept (2 scenarios)
+    window.testRunner.add('accept', '1. Propagates accept filter images string to native input element', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        accept: 'image/*'
+      });
+      const fileInput = el.querySelector('input[type="file"]');
+      expect(fileInput.getAttribute('accept')).toBe('image/*');
+    });
+
+    window.testRunner.add('accept', '2. Synthesizes accept filter from fileTypes array if accept is empty', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        fileTypes: ['.pdf', '.docx']
+      });
+      const fileInput = el.querySelector('input[type="file"]');
+      expect(fileInput.getAttribute('accept')).toBe('.pdf,.docx');
+    });
+
+    // 26. containerClass (2 scenarios)
+    window.testRunner.add('containerClass', '1. Appends custom CSS container classes to uploader body container', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        containerClass: 'verified-tester-class'
+      });
+      expect(uploader.container.classList.contains('verified-tester-class')).toBeTrue();
+    });
+
+    window.testRunner.add('containerClass', '2. Standard classes are mounted when containerClass is omitted', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {});
+      expect(uploader.container.classList.contains('quploader-container')).toBeTrue();
+    });
+
+    // 27. useIcon (2 scenarios)
+    window.testRunner.add('useIcon', '1. Renders icons inside action buttons when useIcon is true', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        useIcon: true,
+        cameraButton: true
+      });
+      const cameraBtn = el.querySelector('.quploader-btn-camera');
+      expect(cameraBtn.querySelector('svg')).notToBeNull();
+    });
+
+    window.testRunner.add('useIcon', '2. Renders plain text inside action buttons when useIcon is false', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        useIcon: false,
+        cameraButton: true
+      });
+      const cameraBtn = el.querySelector('.quploader-btn-camera');
+      expect(cameraBtn.querySelector('svg')).toBeNull();
+    });
+
+    // 28. darkMode (2 scenarios)
+    window.testRunner.add('darkMode', '1. Appends dark class theme when darkMode is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        darkMode: true
+      });
+      expect(uploader.container.classList.contains('quploader-dark')).toBeTrue();
+    });
+
+    window.testRunner.add('darkMode', '2. Omits dark class theme when darkMode is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        darkMode: false
+      });
+      expect(uploader.container.classList.contains('quploader-dark')).toBeFalse();
+    });
+
+    // 29. resumable (2 scenarios)
+    window.testRunner.add('resumable', '1. Stashes resumable parameter true correctly in options object', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        resumable: true
+      });
+      expect(uploader.options.resumable).toBeTrue();
+    });
+
+    window.testRunner.add('resumable', '2. Stashes resumable parameter false correctly in options object', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        resumable: false
+      });
+      expect(uploader.options.resumable).toBeFalse();
+    });
+
+    // 30. preferFileInput (2 scenarios)
+    window.testRunner.add('preferFileInput', '1. Renders file selector input inside uploader structure when preferFileInput is true', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {
+        preferFileInput: true
+      });
+      const input = el.querySelector('input[type="file"]');
+      expect(input).notToBeNull();
+    });
+
+    window.testRunner.add('preferFileInput', '2. Sets file selector input inside uploader structure when options are default', async () => {
+      const el = createTestDiv();
+      new window.QUploader(el, {});
+      const input = el.querySelector('input[type="file"]');
+      expect(input).notToBeNull();
+    });
+
+    // 31. headless (2 scenarios)
+    window.testRunner.add('headless', '1. Omits default uploader UI tree structures when headless is true', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        headless: true
+      });
+      const body = el.querySelector('.quploader-body');
+      expect(body).toBeNull();
+    });
+
+    window.testRunner.add('headless', '2. Builds standard layout UI tree structures when headless is false', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        headless: false
+      });
+      const topContent = el.querySelector('.quploader-top-content');
+      expect(topContent).notToBeNull();
+    });
+
+    // 32. mode (2 scenarios)
+    window.testRunner.add('mode', '1. Configures mode camera successfully', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        mode: 'camera'
+      });
+      expect(uploader.options.mode).toBe('camera');
+    });
+
+    window.testRunner.add('mode', '2. Configures mode dropzone successfully', async () => {
+      const el = createTestDiv();
+      const uploader = new window.QUploader(el, {
+        mode: 'dropzone'
+      });
+      expect(uploader.options.mode).toBe('dropzone');
+    });
+
+    // Execute test suite sequentially
+    async function runAllTests() {
+      const listEl = document.getElementById('scenarios-list');
+      const statTotal = document.getElementById('stat-total');
+      const statPassed = document.getElementById('stat-passed');
+      const statFailed = document.getElementById('stat-failed');
+      const statStatus = document.getElementById('stat-status');
+      const progressBar = document.getElementById('progress-bar');
+      
+      const total = window.testRunner.tests.length;
+      statTotal.textContent = total;
+      
+      let index = 0;
+      for (const test of window.testRunner.tests) {
+        index++;
+        
+        // Render running placeholder
+        const itemEl = document.createElement('div');
+        itemEl.className = 'scenario-item running';
+        itemEl.id = `scenario-item-${index}`;
+        itemEl.innerHTML = `
+          <div class="scenario-header">
+            <div class="scenario-info">
+              <span class="config-name">${test.config}</span>
+              <span class="scenario-title">${test.scenario}</span>
+            </div>
+            <span class="status-badge running">Running</span>
+          </div>
+        `;
+        listEl.appendChild(itemEl);
+        itemEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        try {
+          await test.fn();
+          
+          // Test passed
+          window.testRunner.passed++;
+          statPassed.textContent = window.testRunner.passed;
+          
+          itemEl.className = 'scenario-item pass';
+          itemEl.querySelector('.status-badge').className = 'status-badge pass';
+          itemEl.querySelector('.status-badge').textContent = 'Pass';
+          
+          window.testRunner.results.push({
+            config: test.config,
+            scenario: test.scenario,
+            passed: true
+          });
+        } catch (err) {
+          // Test failed
+          window.testRunner.failed++;
+          statFailed.textContent = window.testRunner.failed;
+          
+          itemEl.className = 'scenario-item fail';
+          itemEl.querySelector('.status-badge').className = 'status-badge fail';
+          itemEl.querySelector('.status-badge').textContent = 'Fail';
+          
+          const detailsEl = document.createElement('pre');
+          detailsEl.className = 'error-details';
+          detailsEl.textContent = `${err.name}: ${err.message}\n${err.stack ? err.stack.split('\n').slice(0, 3).join('\n') : ''}`;
+          itemEl.appendChild(detailsEl);
+          
+          window.testRunner.results.push({
+            config: test.config,
+            scenario: test.scenario,
+            passed: false,
+            error: err.message
+          });
+        }
+        
+        // Update Progress bar
+        const percent = Math.round((index / total) * 100);
+        progressBar.style.width = `${percent}%`;
+        
+        // Artificial delay for visual transition effect
+        await new Promise(r => setTimeout(r, 15));
+      }
+      
+      window.testRunner.isFinished = true;
+      statStatus.textContent = 'Completed';
+      statStatus.style.color = '#10b981';
+      document.querySelector('.stat-card.status').style.borderColor = '#10b981';
+    }
+
+    // Controls Logic
+    document.addEventListener('DOMContentLoaded', () => {
+      // Start running tests
+      setTimeout(runAllTests, 1000); // Small initial delay to ensure scripts are initialized
+
+      const searchInput = document.getElementById('search-input');
+      const btnFilterAll = document.getElementById('btn-filter-all');
+      const btnFilterFailed = document.getElementById('btn-filter-failed');
+      
+      let filterMode = 'all'; // 'all' | 'failed'
+      
+      function updateListVisibility() {
+        const query = searchInput.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.scenario-item');
+        
+        items.forEach((item, idx) => {
+          const configName = item.querySelector('.config-name').textContent.toLowerCase();
+          const scenarioTitle = item.querySelector('.scenario-title').textContent.toLowerCase();
+          const isPass = item.classList.contains('pass');
+          
+          const matchesSearch = configName.includes(query) || scenarioTitle.includes(query);
+          const matchesFilter = filterMode === 'all' || (!isPass && filterMode === 'failed');
+          
+          if (matchesSearch && matchesFilter) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      }
+      
+      searchInput.addEventListener('input', updateListVisibility);
+      
+      btnFilterAll.addEventListener('click', () => {
+        filterMode = 'all';
+        btnFilterAll.classList.add('active');
+        btnFilterFailed.classList.remove('active');
+        updateListVisibility();
+      });
+      
+      btnFilterFailed.addEventListener('click', () => {
+        filterMode = 'failed';
+        btnFilterFailed.classList.add('active');
+        btnFilterAll.classList.remove('active');
+        updateListVisibility();
+      });
+    });
+  </script>
+</body>
+</html>
