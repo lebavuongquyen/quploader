@@ -1308,8 +1308,44 @@ body.quploader-camera-opening > :not(.quploader-camera-modal) {
   display: flex !important;
 }
 
+/* Floating Zoom & Brightness Badges */
+.quploader-zoom-badge,
+.quploader-brightness-badge {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+}
+
+.quploader-zoom-badge {
+  margin-left: -45px;
+}
+
+.quploader-brightness-badge {
+  margin-left: 45px;
+}
+
+.quploader-camera-modal.quploader-in-review .quploader-zoom-badge,
+.quploader-camera-modal.quploader-in-review .quploader-brightness-badge {
+  display: none !important;
+}
+
 .quploader-hidden {
   display: none !important;
 }
+
 
 

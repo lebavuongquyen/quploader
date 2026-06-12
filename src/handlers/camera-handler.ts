@@ -26,6 +26,8 @@ export class CameraHandler {
     let zoomSupported = false;
     let zoomCapabilities: { min: number, max: number, step: number } | null = null;
     let currentZoom = 1;
+    let digitalZoomLevel = 1.0;
+    let currentBrightness = 1.0;
 
     // Advanced settings state
     let selectedRatio: '4:3' | '16:9' | '3:2' | '21:9' | '1:1' = '4:3';
@@ -120,6 +122,8 @@ export class CameraHandler {
         <div class="quploader-camera-video-container">
           <video autoplay playsinline muted class="quploader-camera-video"></video>
           <div class="quploader-camera-grid" style="display:none;"></div>
+          <div class="quploader-zoom-badge" style="display:none;">1.0x</div>
+          <div class="quploader-brightness-badge" style="display:none;">☀️ 100%</div>
         </div>
         <div class="quploader-camera-preview-container">
           <canvas class="quploader-camera-preview"></canvas>
@@ -189,6 +193,51 @@ export class CameraHandler {
     const video = modal.querySelector('.quploader-camera-video') as HTMLVideoElement;
     const canvas = modal.querySelector('.quploader-camera-preview') as HTMLCanvasElement;
     const videoContainer = modal.querySelector('.quploader-camera-video-container') as HTMLDivElement;
+    const zoomBadge = modal.querySelector('.quploader-zoom-badge') as HTMLDivElement;
+    const brightnessBadge = modal.querySelector('.quploader-brightness-badge') as HTMLDivElement;
+
+    // Helpers for filters, brightness and zoom
+    const applyFiltersAndBrightness = () => {
+      let filterStr = getFilterCSS(selectedFilter);
+      if (currentBrightness !== 1.0) {
+        if (filterStr === 'none') {
+          filterStr = `brightness(${currentBrightness})`;
+        } else {
+          filterStr += ` brightness(${currentBrightness})`;
+        }
+      }
+      video.style.filter = filterStr;
+    };
+
+    const updateVideoTransform = () => {
+      const scaleX = isMirrored ? -digitalZoomLevel : digitalZoomLevel;
+      const scaleY = digitalZoomLevel;
+      video.style.transform = `scale(${scaleX}, ${scaleY})`;
+    };
+
+    const updateZoomBadge = () => {
+      const zoomVal = (zoomSupported && zoomCapabilities) ? currentZoom : digitalZoomLevel;
+      if (zoomVal > 1.0) {
+        zoomBadge.style.display = 'block';
+        zoomBadge.textContent = `${zoomVal.toFixed(1)}x`;
+      } else {
+        zoomBadge.style.display = 'none';
+      }
+    };
+
+    let brightnessHideTimeout: any = null;
+    const showBrightnessBadge = () => {
+      brightnessBadge.style.display = 'block';
+      brightnessBadge.textContent = `☀️ ${Math.round(currentBrightness * 100)}%`;
+      
+      if (brightnessHideTimeout) {
+        clearTimeout(brightnessHideTimeout);
+      }
+      
+      brightnessHideTimeout = setTimeout(() => {
+        brightnessBadge.style.display = 'none';
+      }, 1500);
+    };
     const btnSwitch = modal.querySelector('.quploader-btn-switch') as HTMLButtonElement;
     const btnTorch = modal.querySelector('.quploader-btn-torch') as HTMLButtonElement;
     const btnGridToggle = modal.querySelector('.quploader-btn-grid-toggle') as HTMLButtonElement;
@@ -221,6 +270,8 @@ export class CameraHandler {
       document.removeEventListener('webkitfullscreenchange', updateFullscreenButtonState);
       document.removeEventListener('mozfullscreenchange', updateFullscreenButtonState);
       document.removeEventListener('MSFullscreenChange', updateFullscreenButtonState);
+      window.removeEventListener('mousemove', mouseMoveHandler);
+      window.removeEventListener('mouseup', mouseUpHandler);
     };
 
     const keydownHandler = (e: KeyboardEvent) => {
@@ -235,7 +286,7 @@ export class CameraHandler {
     document.addEventListener('mozfullscreenchange', updateFullscreenButtonState);
     document.addEventListener('MSFullscreenChange', updateFullscreenButtonState);
 
-    // ── Pinch-to-Zoom Gesture Implementation ──────────────────────────────
+    // ── Gesture & Control Implementations (Zoom & Brightness) ─────────────
     let startDistance = 0;
     let startZoom = 1;
 
@@ -246,35 +297,133 @@ export class CameraHandler {
       );
     };
 
+    // Touch events for mobile: handles both single-finger brightness and two-finger zoom
     videoContainer.addEventListener('touchstart', (e: TouchEvent) => {
-      if (e.touches.length === 2 && videoTrack && zoomSupported && zoomCapabilities) {
+      if (modal.classList.contains('quploader-in-review')) return;
+      if (e.touches.length === 2 && videoTrack) {
         startDistance = getTouchDistance(e.touches);
-        startZoom = currentZoom;
+        startZoom = (zoomSupported && zoomCapabilities) ? currentZoom : digitalZoomLevel;
+        isBrightnessDragging = false; // abort brightness drag
+      } else if (e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+        startBrightness = currentBrightness;
+        isBrightnessDragging = true;
       }
     }, { passive: true });
 
     videoContainer.addEventListener('touchmove', async (e: TouchEvent) => {
-      if (e.touches.length === 2 && videoTrack && zoomSupported && zoomCapabilities) {
-        e.preventDefault();
+      if (modal.classList.contains('quploader-in-review')) return;
+      
+      if (e.touches.length === 2 && videoTrack) {
+        if (e.cancelable) e.preventDefault();
         const currentDistance = getTouchDistance(e.touches);
         if (startDistance > 0) {
           const factor = currentDistance / startDistance;
-          try {
-            const minZoom = zoomCapabilities.min ?? 1;
-            const maxZoom = zoomCapabilities.max ?? 1;
-
+          if (zoomSupported && zoomCapabilities) {
+            try {
+              const minZoom = zoomCapabilities.min ?? 1;
+              const maxZoom = zoomCapabilities.max ?? 1;
+              let newZoom = startZoom * factor;
+              newZoom = Math.max(minZoom, Math.min(newZoom, maxZoom));
+              await (videoTrack as any).applyConstraints({ advanced: [{ zoom: newZoom }] });
+              currentZoom = newZoom;
+            } catch (err) {
+              console.warn('Hardware pinch-to-zoom failed, falling back to digital:', err);
+              let newZoom = startZoom * factor;
+              newZoom = Math.max(1.0, Math.min(newZoom, 4.0));
+              digitalZoomLevel = newZoom;
+              updateVideoTransform();
+            }
+          } else {
             let newZoom = startZoom * factor;
-            if (newZoom < minZoom) newZoom = minZoom;
-            if (newZoom > maxZoom) newZoom = maxZoom;
-
-            await (videoTrack as any).applyConstraints({ advanced: [{ zoom: newZoom }] });
-            currentZoom = newZoom;
-          } catch (err) {
-            console.warn('Pinch-to-zoom failed:', err);
+            newZoom = Math.max(1.0, Math.min(newZoom, 4.0));
+            digitalZoomLevel = newZoom;
+            updateVideoTransform();
           }
+          updateZoomBadge();
         }
+      } else if (e.touches.length === 1 && isBrightnessDragging) {
+        if (e.cancelable) e.preventDefault();
+        const deltaY = startY - e.touches[0].clientY;
+        const change = deltaY * 0.003;
+        let newBrightness = startBrightness + change;
+        newBrightness = Math.max(0.2, Math.min(newBrightness, 2.0));
+        currentBrightness = newBrightness;
+        applyFiltersAndBrightness();
+        showBrightnessBadge();
       }
     }, { passive: false });
+
+    videoContainer.addEventListener('touchend', () => {
+      isBrightnessDragging = false;
+    });
+
+    // Mouse wheel zoom on desktop
+    videoContainer.addEventListener('wheel', async (e: WheelEvent) => {
+      if (modal.classList.contains('quploader-in-review')) return;
+      e.preventDefault();
+      
+      const zoomStep = 0.15;
+      const zoomDirection = e.deltaY < 0 ? 1 : -1;
+      
+      if (zoomSupported && zoomCapabilities && videoTrack) {
+        try {
+          const minZoom = zoomCapabilities.min ?? 1;
+          const maxZoom = zoomCapabilities.max ?? 1;
+          let newZoom = currentZoom + zoomDirection * zoomStep * (maxZoom - minZoom) * 0.05;
+          newZoom = Math.max(minZoom, Math.min(newZoom, maxZoom));
+          await (videoTrack as any).applyConstraints({ advanced: [{ zoom: newZoom }] });
+          currentZoom = newZoom;
+        } catch (err) {
+          console.warn('Hardware wheel zoom failed, falling back to digital:', err);
+          let newZoom = digitalZoomLevel + zoomDirection * zoomStep;
+          newZoom = Math.max(1.0, Math.min(newZoom, 4.0));
+          digitalZoomLevel = newZoom;
+          updateVideoTransform();
+        }
+      } else {
+        let newZoom = digitalZoomLevel + zoomDirection * zoomStep;
+        newZoom = Math.max(1.0, Math.min(newZoom, 4.0));
+        digitalZoomLevel = newZoom;
+        updateVideoTransform();
+      }
+      updateZoomBadge();
+    }, { passive: false });
+
+    // Brightness variables
+    let startY = 0;
+    let startBrightness = 1.0;
+    let isBrightnessDragging = false;
+    let isMouseDown = false;
+
+    // Mouse drag brightness events on desktop
+    videoContainer.addEventListener('mousedown', (e: MouseEvent) => {
+      if (modal.classList.contains('quploader-in-review')) return;
+      if (e.button === 0) {
+        startY = e.clientY;
+        startBrightness = currentBrightness;
+        isMouseDown = true;
+      }
+    });
+
+    function mouseMoveHandler(e: MouseEvent) {
+      if (isMouseDown) {
+        const deltaY = startY - e.clientY;
+        const change = deltaY * 0.003;
+        let newBrightness = startBrightness + change;
+        newBrightness = Math.max(0.2, Math.min(newBrightness, 2.0));
+        currentBrightness = newBrightness;
+        applyFiltersAndBrightness();
+        showBrightnessBadge();
+      }
+    }
+
+    function mouseUpHandler() {
+      isMouseDown = false;
+    }
+
+    window.addEventListener('mousemove', mouseMoveHandler);
+    window.addEventListener('mouseup', mouseUpHandler);
 
     // Check total camera count to show/hide the switch button
     const checkCameraCount = async () => {
@@ -502,8 +651,12 @@ export class CameraHandler {
           currentZoom = 1;
         }
 
-        // Apply visual states (filter, mirroring)
-        video.style.filter = getFilterCSS(selectedFilter);
+        // Reset zoom and brightness state on camera startup
+        digitalZoomLevel = 1.0;
+        currentBrightness = 1.0;
+        applyFiltersAndBrightness();
+        updateVideoTransform();
+        updateZoomBadge();
         video.classList.toggle('quploader-mirror-active', isMirrored);
 
       } catch (err) {
@@ -580,6 +733,7 @@ export class CameraHandler {
       isMirrored = !isMirrored;
       video.classList.toggle('quploader-mirror-active', isMirrored);
       btnMirrorToggle.classList.toggle('quploader-btn-active', isMirrored);
+      updateVideoTransform();
     });
 
     // Orientation toggle
@@ -633,7 +787,7 @@ export class CameraHandler {
 
     selectFilter.addEventListener('change', (e) => {
       selectedFilter = (e.target as HTMLSelectElement).value;
-      video.style.filter = getFilterCSS(selectedFilter);
+      applyFiltersAndBrightness();
     });
 
     // ── Capture and Photo Review ──────────────────────────────────────────
@@ -778,14 +932,30 @@ export class CameraHandler {
           rawCtx.scale(-1, 1);
         }
 
-        if (selectedFilter && selectedFilter !== 'none') {
+        let filterStr = getFilterCSS(selectedFilter);
+        if (currentBrightness !== 1.0) {
+          if (filterStr === 'none') {
+            filterStr = `brightness(${currentBrightness})`;
+          } else {
+            filterStr += ` brightness(${currentBrightness})`;
+          }
+        }
+        if (filterStr !== 'none') {
           if ('filter' in rawCtx) {
-            (rawCtx as any).filter = getFilterCSS(selectedFilter);
+            (rawCtx as any).filter = filterStr;
           }
         }
 
-        // Draw the video frame to rawCapturedCanvas
-        rawCtx.drawImage(video, 0, 0, cW, cH);
+        // Draw the video frame to rawCapturedCanvas (with digital zoom crop if needed)
+        if (digitalZoomLevel > 1.0) {
+          const sW = video.videoWidth / digitalZoomLevel;
+          const sH = video.videoHeight / digitalZoomLevel;
+          const sX = (video.videoWidth - sW) / 2;
+          const sY = (video.videoHeight - sH) / 2;
+          rawCtx.drawImage(video, sX, sY, sW, sH, 0, 0, cW, cH);
+        } else {
+          rawCtx.drawImage(video, 0, 0, cW, cH);
+        }
         rawCtx.restore();
 
         // Create a pre-scaled preview source canvas to make rotation calculations extremely light and fast
