@@ -323,6 +323,9 @@ When `cameraButton` is enabled:
 *   **Aspect Ratios & Crop**: Supports standard photo aspect ratios: `4:3` (default native phone sensor size), `16:9` (widescreen), `3:2` (classic photo), `21:9` (cinematic), and `1:1` (square).
 *   **Orientation Toggle**: A dedicated toggle button allows manually swapping the crop orientation between portrait and landscape (with smooth icon rotation animation), defaulting automatically to the browser window's aspect ratio.
 *   **Grid Overlay**: Features an upgraded rule-of-thirds outline SVG toggle button and thicker, clearer dashed lines on the video overlay for easier object framing.
+*   **Zoom & Exposure Gestures**:
+    *   **Zoom**: Scroll the mouse wheel on desktop, or use two-finger pinch-to-zoom on mobile (supports hardware zoom constraints, and falls back to a high-fidelity digital zoom up to `4.0x` when hardware constraints are not supported).
+    *   **Exposure (Brightness)**: Swipe vertically up/down with one finger on mobile, or click and drag vertically on desktop to adjust brightness (`0.2` to `2.0`). Real-time floating status badges (e.g. `☀️ 120%` and `1.2x`) display current values.
 *   **Smart Device Fallbacks**: Automatically ignores auxiliary lenses, clears device ID overrides to allow native user-mode switching, and hides the camera switch button entirely if only a single webcam is detected.
 
 ---
