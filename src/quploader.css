@@ -834,7 +834,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .quploader-camera-video-container {
@@ -847,6 +847,7 @@
     overflow: hidden;
     background-color: #000;
     order: 1;
+    margin-top: 24px;
   }
 
   .quploader-camera-preview-container {
@@ -860,6 +861,7 @@
     overflow: hidden;
     background-color: #000;
     order: 1;
+    margin-top: 24px;
   }
 
   .quploader-camera-video {
@@ -892,7 +894,7 @@
     bottom: auto;
     left: auto;
     right: auto;
-    padding: 24px 20px;
+    padding: 4px 20px 24px 20px;
     justify-content: center;
     align-items: center;
     gap: 30px;
@@ -960,13 +962,14 @@
     top: auto;
     left: auto;
     right: auto;
-    padding: 16px 15px;
+    padding: 16px 15px 4px 15px;
     justify-content: center;
     align-items: center;
     background: #000;
     z-index: 10;
     gap: 8px;
     order: 2;
+    margin-top: auto;
   }
 
   /* Toolbar buttons on mobile */
@@ -1010,7 +1013,7 @@
     bottom: auto;
     left: auto;
     right: auto;
-    padding: 24px 20px;
+    padding: 4px 20px 24px 20px;
     justify-content: center;
     align-items: center;
     gap: 15px;
@@ -1070,7 +1073,7 @@
   position: relative !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-between !important;
+  justify-content: flex-start !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-video-container {
@@ -1083,6 +1086,7 @@
   overflow: hidden !important;
   background-color: #000 !important;
   order: 1 !important;
+  margin-top: 24px !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-preview-container {
@@ -1096,6 +1100,7 @@
   overflow: hidden !important;
   background-color: #000 !important;
   order: 1 !important;
+  margin-top: 24px !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-video {
@@ -1127,7 +1132,7 @@
   bottom: auto !important;
   left: auto !important;
   right: auto !important;
-  padding: 24px 20px !important;
+  padding: 4px 20px 24px 20px !important;
   justify-content: center !important;
   align-items: center !important;
   gap: 30px !important;
@@ -1193,13 +1198,14 @@
   top: auto !important;
   left: auto !important;
   right: auto !important;
-  padding: 16px 15px !important;
+  padding: 16px 15px 4px 15px !important;
   justify-content: center !important;
   align-items: center !important;
   background: #000 !important;
   z-index: 10 !important;
   gap: 8px !important;
   order: 2 !important;
+  margin-top: auto !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-btn-switch,
@@ -1228,7 +1234,7 @@
   bottom: auto !important;
   left: auto !important;
   right: auto !important;
-  padding: 24px 20px !important;
+  padding: 4px 20px 24px 20px !important;
   justify-content: center !important;
   align-items: center !important;
   gap: 15px !important;

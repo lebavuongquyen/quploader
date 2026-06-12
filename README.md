@@ -10,7 +10,7 @@ It features WebRTC camera capture, client-side image resizing, chunked/resumable
 
 *   🍦 **Vanilla JS Core**: Pure TypeScript class requiring no external framework or libraries (e.g. jQuery).
 *   🔌 **jQuery Compatibility Wrapper**: Seamlessly hooks into `$.fn.quploader` automatically if jQuery is loaded, ensuring legacy pages continue to run unchanged.
-*   📸 **WebRTC Camera Capture**: Stream and capture photos inside the uploader using `getUserMedia`, featuring orientation detection, camera flash/torch control, and responsive capture previews.
+*   📸 **Enhanced WebRTC Camera**: Stream and capture photos using `getUserMedia` with standard camera aspect ratios (4:3 default, 16:9, 3:2, 21:9, 1:1), live crop orientation toggling (portrait/landscape) with animated smartphone icon transitions, active camera auto-detection, flash/torch control, and rule-of-thirds grid alignment overlays.
 *   📦 **Chunked & Resumable Uploads**: Slices large files into chunks for sequential uploading, with automatic resuming based on `localStorage` state verification.
 *   ✂️ **Client-Side Image Resizing**: Automatic scaling of images using HTML5 Canvas prior to upload, keeping payloads optimized.
 *   🚫 **Synchronous Cancellation**: Cleanly aborts active client-side requests (`XHR` / `AbortController`) and triggers a server-side cleanup request to `cancelUrl` using a unique session `uploadId`.
@@ -319,7 +319,11 @@ By specifying `resize: { maxWidth, maxHeight }`, QUploader downscales images cli
 When `cameraButton` is enabled:
 *   QUploader displays a camera trigger button.
 *   Clicking it starts a WebRTC video stream using `navigator.mediaDevices.getUserMedia`.
-*   Features native support for camera flash/torch toggle, device orientation adjustment, full-screen viewport scaling on mobile devices, and direct canvas snapshots converted into PNG/JPEG `Blob` objects ready for upload.
+*   **Monochrome UI**: Clean SVG outline icons and transparent active styling to match the project's aesthetics.
+*   **Aspect Ratios & Crop**: Supports standard photo aspect ratios: `4:3` (default native phone sensor size), `16:9` (widescreen), `3:2` (classic photo), `21:9` (cinematic), and `1:1` (square).
+*   **Orientation Toggle**: A dedicated toggle button allows manually swapping the crop orientation between portrait and landscape (with smooth icon rotation animation), defaulting automatically to the browser window's aspect ratio.
+*   **Grid Overlay**: Features an upgraded rule-of-thirds outline SVG toggle button and thicker, clearer dashed lines on the video overlay for easier object framing.
+*   **Smart Device Fallbacks**: Automatically ignores auxiliary lenses, clears device ID overrides to allow native user-mode switching, and hides the camera switch button entirely if only a single webcam is detected.
 
 ---
 
