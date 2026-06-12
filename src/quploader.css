@@ -527,7 +527,7 @@
   top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none;
   box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
   z-index: 2;
 }
 
@@ -542,16 +542,16 @@
   top: 33.33%;
   bottom: 33.33%;
   left: 0; right: 0;
-  border-top: 1px dashed rgba(255, 255, 255, 0.35);
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.35);
+  border-top: 1.5px dashed rgba(255, 255, 255, 0.65);
+  border-bottom: 1.5px dashed rgba(255, 255, 255, 0.65);
 }
 
 .quploader-camera-grid::after {
   left: 33.33%;
   right: 33.33%;
   top: 0; bottom: 0;
-  border-left: 1px dashed rgba(255, 255, 255, 0.35);
-  border-right: 1px dashed rgba(255, 255, 255, 0.35);
+  border-left: 1.5px dashed rgba(255, 255, 255, 0.65);
+  border-right: 1.5px dashed rgba(255, 255, 255, 0.65);
 }
 
 /* Portrait image captured: constrain by height */
@@ -717,6 +717,15 @@
   cursor: pointer;
   line-height: 1;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quploader-btn-switch svg,
+.quploader-btn-grid-toggle svg,
+.quploader-btn-mirror-toggle svg {
+  display: block;
 }
 .quploader-btn-switch:hover,
 .quploader-btn-grid-toggle:hover,
@@ -733,8 +742,8 @@
 .quploader-btn-mirror-toggle.quploader-btn-active,
 .quploader-btn-orientation-toggle.quploader-btn-active,
 .quploader-btn-fullscreen.quploader-btn-active {
-  background: rgba(0, 123, 255, 0.4);
-  border-color: #007bff;
+  background: rgba(255, 255, 255, 0.35);
+  border-color: #ffffff;
 }
 
 .quploader-btn-torch.quploader-btn-torch-active {
@@ -837,7 +846,7 @@
     justify-content: center;
     overflow: hidden;
     background-color: #000;
-    order: 2;
+    order: 1;
   }
 
   .quploader-camera-preview-container {
@@ -850,7 +859,7 @@
     justify-content: center;
     overflow: hidden;
     background-color: #000;
-    order: 2;
+    order: 1;
   }
 
   .quploader-camera-video {
@@ -861,7 +870,7 @@
     object-fit: cover !important;
     border-radius: 0;
     flex: none;
-    order: 2;
+    order: 1;
   }
 
   .quploader-camera-preview,
@@ -874,7 +883,7 @@
     object-fit: contain;
     border-radius: 0;
     flex: none;
-    order: 2;
+    order: 1;
   }
 
   /* Live view controls (capture bar) */
@@ -957,7 +966,7 @@
     background: #000;
     z-index: 10;
     gap: 8px;
-    order: 1;
+    order: 2;
   }
 
   /* Toolbar buttons on mobile */
@@ -1073,7 +1082,7 @@
   justify-content: center !important;
   overflow: hidden !important;
   background-color: #000 !important;
-  order: 2 !important;
+  order: 1 !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-preview-container {
@@ -1086,7 +1095,7 @@
   justify-content: center !important;
   overflow: hidden !important;
   background-color: #000 !important;
-  order: 2 !important;
+  order: 1 !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-video {
@@ -1097,7 +1106,7 @@
   object-fit: cover !important;
   border-radius: 0 !important;
   flex: none !important;
-  order: 2 !important;
+  order: 1 !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-preview,
@@ -1110,7 +1119,7 @@
   object-fit: contain !important;
   border-radius: 0 !important;
   flex: none !important;
-  order: 2 !important;
+  order: 1 !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-camera-controls {
@@ -1190,7 +1199,7 @@
   background: #000 !important;
   z-index: 10 !important;
   gap: 8px !important;
-  order: 1 !important;
+  order: 2 !important;
 }
 
 .quploader-camera-modal.quploader-is-mobile .quploader-btn-switch,
@@ -1291,6 +1300,10 @@ body.quploader-camera-opening > :not(.quploader-camera-modal) {
 
 .quploader-camera-modal.quploader-in-review .quploader-camera-preview-controls {
   display: flex !important;
+}
+
+.quploader-hidden {
+  display: none !important;
 }
 
 

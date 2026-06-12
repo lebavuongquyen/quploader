@@ -107,7 +107,7 @@ export class CameraHandler {
       }
       if (!bestFront && videoDevices.length > 0) {
         const front = videoDevices.find(d => /front|user|facing/i.test(d.label.toLowerCase()));
-        bestFront = front || videoDevices[0];
+        bestFront = front || null;
       }
 
       return { bestBack, bestFront };
@@ -163,10 +163,10 @@ export class CameraHandler {
         </div>
 
         <div class="quploader-camera-toolbar">
-          <button type="button" class="quploader-btn-switch" title="Switch Camera">🔄</button>
+          <button type="button" class="quploader-btn-switch" title="Switch Camera"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
           <button type="button" class="quploader-btn-torch" title="Toggle Flash" style="display:none;">⚡</button>
-          <button type="button" class="quploader-btn-grid-toggle" title="Toggle Grid">▦</button>
-          <button type="button" class="quploader-btn-mirror-toggle" title="Toggle Mirror">↔️</button>
+          <button type="button" class="quploader-btn-grid-toggle" title="Toggle Grid"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg></button>
+          <button type="button" class="quploader-btn-mirror-toggle" title="Toggle Mirror"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22" stroke-dasharray="3 3"></line><path d="M18 8l4 4-4 4M6 8L2 12l4 4M2 12h8M22 12h-8"/></svg></button>
           <button type="button" class="quploader-btn-orientation-toggle" title="Toggle Orientation (Landscape/Portrait)"><span class="quploader-orientation-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></span></button>
           <button type="button" class="quploader-btn-settings-toggle" title="Settings">⚙️</button>
           <button type="button" class="quploader-btn-fullscreen" title="Toggle Fullscreen">⛶</button>
@@ -281,11 +281,18 @@ export class CameraHandler {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
-        // Always show switch button on mobile, or if more than 1 camera is detected
-        if (videoDevices.length <= 1 && !isMobile) {
-          btnSwitch.style.display = 'none';
+        
+        console.log('QUploader Camera List:', videoDevices.map(d => ({
+          deviceId: d.deviceId,
+          kind: d.kind,
+          label: d.label || '(empty label, needs permission first)'
+        })));
+
+        // Hide switch button if 1 or 0 video cameras are detected
+        if (videoDevices.length <= 1) {
+          btnSwitch.classList.add('quploader-hidden');
         } else {
-          btnSwitch.style.display = 'block';
+          btnSwitch.classList.remove('quploader-hidden');
         }
       } catch (err) {
         console.warn('Enumerate devices failed:', err);
@@ -307,7 +314,13 @@ export class CameraHandler {
           } else {
             if (bestFront && bestFront.deviceId) {
               currentDeviceId = bestFront.deviceId;
+            } else {
+              currentDeviceId = '';
             }
+          }
+        } else {
+          if (currentFacingMode === 'user') {
+            currentDeviceId = '';
           }
         }
       } catch (err) {
@@ -372,8 +385,8 @@ export class CameraHandler {
         this.stream = null;
       }
 
-      const resWidth = 3840;
-      const resHeight = 2160;
+      const resWidth = 2560;
+      const resHeight = 1440;
 
       let aspectConstraint: number | undefined = undefined;
       if (selectedRatio === '4:3') aspectConstraint = 4 / 3;
@@ -383,8 +396,8 @@ export class CameraHandler {
       else if (selectedRatio === '1:1') aspectConstraint = 1.0;
 
       const constraints: MediaTrackConstraints = {
-        width: { ideal: resWidth },
-        height: { ideal: resHeight }
+        width: { ideal: resWidth, max: resWidth },
+        height: { ideal: resHeight, max: resHeight }
       };
 
       if (currentDeviceId) {
