@@ -28,11 +28,13 @@ export class CameraHandler {
     let currentZoom = 1;
 
     // Advanced settings state
-    let selectedRatio: '4:3' | '16:9' | '1:1' = '16:9';
+    let selectedRatio: '4:3' | '16:9' | '3:2' | '21:9' | '1:1' = '4:3';
     let selectedFilter = 'none';
     let isMirrored = false;
     let gridOn = false;
-    let currentViewfinderRatio = 16 / 9;
+    let currentViewfinderRatio = 4 / 3;
+    let currentOrientation: 'landscape' | 'portrait' = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+    let hasManuallyToggledOrientation = false;
 
     const rawCapturedCanvas = document.createElement('canvas');
 
@@ -138,8 +140,10 @@ export class CameraHandler {
             <div class="quploader-setting-row">
               <label>Aspect Ratio</label>
               <select class="quploader-select-ratio">
-                <option value="4:3">4:3 Standard</option>
-                <option value="16:9" selected>16:9 Widescreen</option>
+                <option value="4:3" selected>4:3 Standard</option>
+                <option value="16:9">16:9 Widescreen</option>
+                <option value="3:2">3:2 Classic Photo</option>
+                <option value="21:9">21:9 Cinematic</option>
                 <option value="1:1">1:1 Square</option>
               </select>
             </div>
@@ -163,12 +167,13 @@ export class CameraHandler {
           <button type="button" class="quploader-btn-torch" title="Toggle Flash" style="display:none;">⚡</button>
           <button type="button" class="quploader-btn-grid-toggle" title="Toggle Grid">▦</button>
           <button type="button" class="quploader-btn-mirror-toggle" title="Toggle Mirror">↔️</button>
+          <button type="button" class="quploader-btn-orientation-toggle" title="Toggle Orientation (Landscape/Portrait)"><span class="quploader-orientation-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></span></button>
           <button type="button" class="quploader-btn-settings-toggle" title="Settings">⚙️</button>
           <button type="button" class="quploader-btn-fullscreen" title="Toggle Fullscreen">⛶</button>
         </div>
         <div class="quploader-camera-controls">
           <button type="button" class="quploader-btn-close" title="Close">Close</button>
-          <button type="button" class="quploader-btn-capture" title="Capture"></button>
+          <button type="button" class="quploader-btn-capture" title="Capture">Capture</button>
         </div>
         <div class="quploader-camera-preview-controls">
           <button type="button" class="quploader-btn-retake">↩ Retake</button>
@@ -188,6 +193,7 @@ export class CameraHandler {
     const btnTorch = modal.querySelector('.quploader-btn-torch') as HTMLButtonElement;
     const btnGridToggle = modal.querySelector('.quploader-btn-grid-toggle') as HTMLButtonElement;
     const btnMirrorToggle = modal.querySelector('.quploader-btn-mirror-toggle') as HTMLButtonElement;
+    const btnOrientationToggle = modal.querySelector('.quploader-btn-orientation-toggle') as HTMLButtonElement;
     const btnSettingsToggle = modal.querySelector('.quploader-btn-settings-toggle') as HTMLButtonElement;
     const btnSettingsClose = modal.querySelector('.quploader-btn-settings-close') as HTMLButtonElement;
     const btnFullscreen = modal.querySelector('.quploader-btn-fullscreen') as HTMLButtonElement;
@@ -310,15 +316,16 @@ export class CameraHandler {
     };
 
     function calculateStreamingRatio() {
-      let isPortrait = window.innerHeight > window.innerWidth;
-      if (video.videoWidth && video.videoHeight) {
-        isPortrait = video.videoHeight > video.videoWidth;
-      }
+      const isPortrait = currentOrientation === 'portrait';
 
       if (selectedRatio === '16:9') {
         currentViewfinderRatio = isPortrait ? 9 / 16 : 16 / 9;
       } else if (selectedRatio === '4:3') {
         currentViewfinderRatio = isPortrait ? 3 / 4 : 4 / 3;
+      } else if (selectedRatio === '3:2') {
+        currentViewfinderRatio = isPortrait ? 2 / 3 : 3 / 2;
+      } else if (selectedRatio === '21:9') {
+        currentViewfinderRatio = isPortrait ? 9 / 21 : 21 / 9;
       } else if (selectedRatio === '1:1') {
         currentViewfinderRatio = 1.0;
       }
@@ -349,6 +356,10 @@ export class CameraHandler {
 
     function resizeHandler() {
       if (!modal.classList.contains('quploader-in-review')) {
+        if (!hasManuallyToggledOrientation) {
+          currentOrientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+          updateOrientationButtonUI();
+        }
         calculateStreamingRatio();
       }
       updateViewfinderAspectRatio();
@@ -367,6 +378,8 @@ export class CameraHandler {
       let aspectConstraint: number | undefined = undefined;
       if (selectedRatio === '4:3') aspectConstraint = 4 / 3;
       else if (selectedRatio === '16:9') aspectConstraint = 16 / 9;
+      else if (selectedRatio === '3:2') aspectConstraint = 3 / 2;
+      else if (selectedRatio === '21:9') aspectConstraint = 21 / 9;
       else if (selectedRatio === '1:1') aspectConstraint = 1.0;
 
       const constraints: MediaTrackConstraints = {
@@ -398,6 +411,7 @@ export class CameraHandler {
         // Explicitly play video to ensure it is active and streaming on all mobile browsers
         try {
           await video.play();
+          updateOrientationButtonUI();
           calculateStreamingRatio();
           updateViewfinderAspectRatio();
         } catch (playErr) {
@@ -405,6 +419,7 @@ export class CameraHandler {
         }
 
         video.onloadedmetadata = () => {
+          updateOrientationButtonUI();
           calculateStreamingRatio();
           updateViewfinderAspectRatio();
         };
@@ -489,6 +504,16 @@ export class CameraHandler {
       }
     };
 
+    const updateOrientationButtonUI = () => {
+      if (currentOrientation === 'portrait') {
+        btnOrientationToggle.classList.remove('quploader-orientation-landscape');
+        btnOrientationToggle.classList.add('quploader-orientation-portrait');
+      } else {
+        btnOrientationToggle.classList.remove('quploader-orientation-portrait');
+        btnOrientationToggle.classList.add('quploader-orientation-landscape');
+      }
+    };
+
     const initCamera = async () => {
       await preSelectBestCamera();
       await startStream();
@@ -544,6 +569,15 @@ export class CameraHandler {
       btnMirrorToggle.classList.toggle('quploader-btn-active', isMirrored);
     });
 
+    // Orientation toggle
+    btnOrientationToggle.addEventListener('click', () => {
+      hasManuallyToggledOrientation = true;
+      currentOrientation = currentOrientation === 'landscape' ? 'portrait' : 'landscape';
+      updateOrientationButtonUI();
+      calculateStreamingRatio();
+      updateViewfinderAspectRatio();
+    });
+
     // Settings Panel toggling
     const toggleSettingsPanel = () => {
       settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
@@ -594,7 +628,8 @@ export class CameraHandler {
       targetCanvas: HTMLCanvasElement,
       sourceCanvas: HTMLCanvasElement,
       angle: number,
-      ratio: '4:3' | '16:9' | '1:1',
+      ratio: '4:3' | '16:9' | '3:2' | '21:9' | '1:1',
+      orientation: 'landscape' | 'portrait',
       maxDim?: number
     ) => {
       const angleRad = (angle * Math.PI) / 180;
@@ -605,12 +640,19 @@ export class CameraHandler {
       const rotHeight = is90or270 ? sourceCanvas.width : sourceCanvas.height;
 
       // Calculate target aspect ratio crop dimensions
-      let targetRatio = 4 / 3;
-      if (ratio === '16:9') targetRatio = 16 / 9;
+      let targetRatio = 16 / 9;
+      if (ratio === '4:3') targetRatio = 4 / 3;
+      else if (ratio === '3:2') targetRatio = 3 / 2;
+      else if (ratio === '21:9') targetRatio = 21 / 9;
       else if (ratio === '1:1') targetRatio = 1.0;
 
-      // If the rotated image is portrait, flip the target ratio
-      const isPortrait = rotHeight > rotWidth;
+      // Calculate final orientation based on angle of rotation
+      let finalOrientation = orientation;
+      if (angle === 90 || angle === 270) {
+        finalOrientation = orientation === 'landscape' ? 'portrait' : 'landscape';
+      }
+
+      const isPortrait = finalOrientation === 'portrait';
       if (isPortrait && ratio !== '1:1') {
         targetRatio = 1 / targetRatio;
       }
@@ -752,9 +794,10 @@ export class CameraHandler {
 
         // Review state (rotation angle)
         let rotationAngle = 0;
+        const capturedOrientation = currentOrientation;
 
         const renderRotatedPreview = () => {
-          drawProcessedImage(canvas, previewSourceCanvas, rotationAngle, selectedRatio, 1024);
+          drawProcessedImage(canvas, previewSourceCanvas, rotationAngle, selectedRatio, capturedOrientation, 1024);
 
           // Update the aspect ratio of the container to match the rotated review image
           currentViewfinderRatio = canvas.width / canvas.height;
@@ -786,7 +829,7 @@ export class CameraHandler {
         // Use Photo Confirm Handler
         btnUsePhoto.addEventListener('click', () => {
           const exportCanvas = document.createElement('canvas');
-          drawProcessedImage(exportCanvas, rawCapturedCanvas, rotationAngle, selectedRatio);
+          drawProcessedImage(exportCanvas, rawCapturedCanvas, rotationAngle, selectedRatio, capturedOrientation);
 
           exportCanvas.toBlob((blob) => {
             if (!blob) return;

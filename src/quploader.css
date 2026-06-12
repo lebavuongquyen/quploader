@@ -706,6 +706,7 @@
 .quploader-btn-mirror-toggle,
 .quploader-btn-settings-toggle,
 .quploader-btn-torch,
+.quploader-btn-orientation-toggle,
 .quploader-btn-fullscreen {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -730,6 +731,7 @@
 /* Button Active states */
 .quploader-btn-grid-toggle.quploader-btn-active,
 .quploader-btn-mirror-toggle.quploader-btn-active,
+.quploader-btn-orientation-toggle.quploader-btn-active,
 .quploader-btn-fullscreen.quploader-btn-active {
   background: rgba(0, 123, 255, 0.4);
   border-color: #007bff;
@@ -739,6 +741,24 @@
   background: rgba(255, 200, 0, 0.4);
   border-color: #ffd700;
   color: #ffd700;
+}
+
+/* Dynamic Phone Orientation Icon Rotation */
+.quploader-orientation-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+}
+.quploader-orientation-icon svg {
+  display: block;
+}
+.quploader-btn-orientation-toggle.quploader-orientation-landscape .quploader-orientation-icon {
+  transform: rotate(90deg);
+}
+.quploader-btn-orientation-toggle.quploader-orientation-portrait .quploader-orientation-icon {
+  transform: rotate(0deg);
 }
 
 /* Capture bottom controls */
@@ -946,6 +966,7 @@
   .quploader-btn-mirror-toggle,
   .quploader-btn-settings-toggle,
   .quploader-btn-torch,
+  .quploader-btn-orientation-toggle,
   .quploader-btn-fullscreen {
     width: 40px;
     height: 40px;
@@ -1177,6 +1198,7 @@
 .quploader-camera-modal.quploader-is-mobile .quploader-btn-mirror-toggle,
 .quploader-camera-modal.quploader-is-mobile .quploader-btn-settings-toggle,
 .quploader-camera-modal.quploader-is-mobile .quploader-btn-torch,
+.quploader-camera-modal.quploader-is-mobile .quploader-btn-orientation-toggle,
 .quploader-camera-modal.quploader-is-mobile .quploader-btn-fullscreen {
   width: 40px !important;
   height: 40px !important;
